@@ -1,0 +1,4 @@
+interface:
+  display_name: "Zish Skill Manager"
+  short_description: "Manage personal and private Codex skills"
+  default_prompt: "Use $zish-skill-manager to create, migrate, validate, and link my personal or private Codex skills."
