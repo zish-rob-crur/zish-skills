@@ -6,7 +6,9 @@ A collection of reusable skills I use with coding agents and AI workflows.
 
 | Skill | Purpose |
 | --- | --- |
+| `analyze-open-source-repo` | Analyze open source repositories and save structured Obsidian study notes. |
 | `handoff` | Create concise Markdown handoffs for Coding Agent work, blockers, reviews, escalations, or context transfers. |
+| `tmux-nvim-review` | Open files changed by Codex in a new tmux pane with nvim for review. |
 | `zish-skill-manager` | Manage personal, public, private, company, and customer-specific Codex skills without leaking private material into this public repo. |
 
 ## Install From Remote With `npx skills`
@@ -28,7 +30,9 @@ npx skills add https://github.com/zish-rob-crur/zish-skills --skill '*' --agent 
 Install a single skill for Codex globally:
 
 ```bash
+npx skills add https://github.com/zish-rob-crur/zish-skills --skill analyze-open-source-repo --agent codex --global
 npx skills add https://github.com/zish-rob-crur/zish-skills --skill handoff --agent codex --global
+npx skills add https://github.com/zish-rob-crur/zish-skills --skill tmux-nvim-review --agent codex --global
 npx skills add https://github.com/zish-rob-crur/zish-skills --skill zish-skill-manager --agent codex --global
 ```
 
@@ -47,5 +51,5 @@ npx skills add zish-rob-crur/zish-skills --skill handoff --agent codex --global
 Update installed skills later:
 
 ```bash
-npx skills update handoff zish-skill-manager --global
+npx skills update analyze-open-source-repo handoff tmux-nvim-review zish-skill-manager --global
 ```

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tmux Nvim Review"
+  short_description: "Open changed files in a tmux nvim review pane"
+  default_prompt: "Use $tmux-nvim-review to open the files you changed in a tmux pane with nvim for my review."

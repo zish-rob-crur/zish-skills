@@ -1,0 +1,4 @@
+interface:
+  display_name: "Analyze Open Source Repo"
+  short_description: "Study repos and write Obsidian notes"
+  default_prompt: "Use $analyze-open-source-repo to analyze this repo path or URL and save a structured Chinese note to Obsidian."
