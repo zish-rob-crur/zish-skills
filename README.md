@@ -7,7 +7,7 @@ A collection of reusable skills I use with coding agents and AI workflows.
 | Skill | Purpose |
 | --- | --- |
 | `analyze-open-source-repo` | Analyze open source repositories and save structured Obsidian study notes. |
-| `handoff` | Create concise Markdown handoffs for Coding Agent work, blockers, reviews, escalations, or context transfers. |
+| `handoff` | Create concise Markdown handoffs for Coding Agent work, blockers, reviews, escalations, or context transfers, with an optional zip bundle of the referenced code. |
 | `tmux-nvim-review` | Open files changed by Codex in a new tmux pane with nvim for review. |
 | `zish-skill-manager` | Manage personal, public, private, company, and customer-specific Codex skills without leaking private material into this public repo. |
 
