@@ -1,4 +1,0 @@
-interface:
-  display_name: "Tmux Agent Review"
-  short_description: "Adversarial Codex/Claude review in a tmux pane"
-  default_prompt: "Use $tmux-agent-review to have Claude Code adversarially review this plan in a tmux pane."

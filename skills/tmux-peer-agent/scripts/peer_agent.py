@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run a Codex or Claude Code reviewer in a tmux pane and hand results back through files."""
+"""Drive a Codex or Claude Code peer in a tmux pane: review a design, or hand it a task."""
 from __future__ import annotations
 
 import argparse
@@ -14,18 +14,22 @@ from pathlib import Path
 from typing import Callable, NoReturn
 
 
-REVIEW_DIR = ".agent-review"
-PANE_MARK = "@agent-review"  # tmux pane option naming the reviewer agent; only marked panes are reused
+WORK_DIR = ".peer-agent"
+PANE_MARK = "@peer-agent"  # tmux pane option naming the peer agent; only marked panes are reused
 SHELLS = {"zsh", "bash", "fish", "sh", "dash", "-zsh", "-bash", "login"}
-LAUNCH_ENV = {"codex": "AGENT_REVIEW_CODEX_CMD", "claude": "AGENT_REVIEW_CLAUDE_CMD"}
+LAUNCH_ENV = {"codex": "PEER_AGENT_CODEX_CMD", "claude": "PEER_AGENT_CLAUDE_CMD"}
 # Codex: "Working (9s • esc to interrupt)". Claude Code: "· Effecting… (13s · ↓ 267 tokens · ...)".
 BUSY = re.compile(r"esc to interrupt|…\s*\((?:\d+[hms]\s*)+·", re.IGNORECASE)
 STARTUP_TIMEOUT = 90
 POLL_INTERVAL = 3
 TRUST_PROMPT = re.compile(r"\btrust\b", re.IGNORECASE)
-VERDICT = re.compile(r"^VERDICT:\s*(APPROVE|REVISE|BLOCKED)\s*$")
+RESULT_NAME = {"review": "review", "task": "report"}
+RESULT_LINE = {
+    "review": re.compile(r"^VERDICT:\s*(APPROVE|REVISE|BLOCKED)\s*$"),
+    "task": re.compile(r"^STATUS:\s*(DONE|PARTIAL|BLOCKED)\s*$"),
+}
 
-PROTOCOL = """
+REVIEW_PROTOCOL = """
 
 ---
 
@@ -81,12 +85,64 @@ The requester is polling for `{out}`. After the move, reply here with one line:
 `review written: {out}`.
 """
 
-FOLLOWUP = """
+REVIEW_FOLLOWUP = """
 
 This round answers your previous review ({previous}). Start Findings by marking each
 earlier blocker/major RESOLVED, WITHDRAWN (the response convinced you), or MAINTAINED
 (say why the response fails). Do not repeat a point without new evidence. Add a new
 finding only if it is blocker or major."""
+
+
+TASK_PROTOCOL = """
+
+---
+
+## Worker protocol (tmux-peer-agent)
+
+You are the worker. Another coding agent in this worktree delegated the task above.
+A human may also type in this pane; their messages override this protocol.
+
+Rules:
+- Work only inside the scope the brief gives you. The requester is working in the same
+  worktree at the same time, so touching files outside your scope loses their work.
+  If the task needs changes outside the scope, stop and report instead of widening it.
+- Do not commit, push, stash, revert, or switch branches.
+- Verify with the commands the brief names, and report their real output. Never report
+  a check you did not run.
+- When something blocks you, such as a missing decision, credential, or broken
+  dependency, stop and report it instead of guessing around it.
+
+Session `{session}`, round {round}.{followup}
+
+Status: DONE when the whole scope is finished and verified; PARTIAL when some of it is;
+BLOCKED when you could not start or continue.
+
+Write your report to `{out}` in the language of the brief. The first line must be the status:
+
+```
+STATUS: DONE | PARTIAL | BLOCKED
+
+## Changes
+- `path:line` — what changed and why
+
+## Verification
+- <command> → <result>
+
+## Left open
+- <what remains, or a decision the requester or the human has to make>
+```
+
+Write the file atomically: write `{out}.tmp`, then `mv {out}.tmp {out}`.
+The requester is polling for `{out}`. After the move, reply here with one line:
+`report written: {out}`.
+"""
+
+TASK_FOLLOWUP = """
+
+This round is feedback on your previous report ({previous}). Fix what it asks for and
+leave the rest alone; do not redo work it accepted."""
+
+PROTOCOLS = {"review": (REVIEW_PROTOCOL, REVIEW_FOLLOWUP), "task": (TASK_PROTOCOL, TASK_FOLLOWUP)}
 
 
 def fail(message: str, code: int = 2) -> NoReturn:
@@ -142,18 +198,18 @@ def exclude_review_dir(root: Path) -> None:
         return
     exclude = root / result.stdout.strip()
     lines = exclude.read_text().splitlines() if exclude.exists() else []
-    if f"/{REVIEW_DIR}/" not in lines:
+    if f"/{WORK_DIR}/" not in lines:
         exclude.parent.mkdir(parents=True, exist_ok=True)
         with exclude.open("a") as handle:
-            handle.write(f"/{REVIEW_DIR}/\n")
+            handle.write(f"/{WORK_DIR}/\n")
 
 
 def session_dir(session: str | None) -> Path:
     if session:
-        return project_root() / REVIEW_DIR / session
-    states = sorted((project_root() / REVIEW_DIR).glob("*/state.json"), key=lambda path: path.stat().st_mtime)
+        return project_root() / WORK_DIR / session
+    states = sorted((project_root() / WORK_DIR).glob("*/state.json"), key=lambda path: path.stat().st_mtime)
     if not states:
-        fail(f"no review sessions under {project_root() / REVIEW_DIR}")
+        fail(f"no sessions under {project_root() / WORK_DIR}")
     return states[-1].parent
 
 
@@ -242,7 +298,7 @@ def pane_agent(command: str) -> str | None:
 
 
 def find_idle_pane(agent: str, root: Path, target: str) -> tuple[str | None, list[str]]:
-    """Return an idle reviewer pane marked for this agent in the target's window and repo, plus busy ones."""
+    """Return an idle peer pane marked for this agent in the target's window and repo, plus busy ones."""
     fmt = f"#{{pane_id}}\t#{{{PANE_MARK}}}\t#{{pane_current_command}}\t#{{pane_current_path}}"
     busy = []
     for line in tmux("list-panes", "-t", target, "-F", fmt).splitlines():
@@ -282,26 +338,30 @@ def choose_pane(args: argparse.Namespace, state: dict, agent: str, root: Path, c
     if state.get("pane"):
         if pane_info(state["pane"]):
             return state["pane"]
-        print(f"note: previous reviewer pane {state['pane']} is gone", file=sys.stderr)
+        print(f"note: previous peer pane {state['pane']} is gone", file=sys.stderr)
     if not args.new_pane:
         pane, busy = find_idle_pane(agent, root, caller_pane)
         if pane:
-            print(f"note: reusing idle {agent} reviewer pane {pane}", file=sys.stderr)
+            print(f"note: reusing idle {agent} peer pane {pane}", file=sys.stderr)
             return pane
         if busy:
-            print(f"note: {agent} reviewer pane(s) {', '.join(busy)} busy; opening a new pane", file=sys.stderr)
+            print(f"note: {agent} peer pane(s) {', '.join(busy)} busy; opening a new pane", file=sys.stderr)
     return split_largest_pane(caller_pane, root, args.direction)
 
 
 def cmd_send(args: argparse.Namespace) -> int:
     root = project_root()
     session = args.session or datetime.now().strftime("%Y%m%d-%H%M%S")
-    directory = root / REVIEW_DIR / session
+    directory = root / WORK_DIR / session
     state = load_state(directory)
+
+    mode = args.mode or state.get("mode", "review")
+    if state and mode != state.get("mode", "review"):
+        fail(f"session {session} is a {state.get('mode', 'review')} session")
 
     body = sys.stdin.read() if args.message_file == "-" else Path(args.message_file).read_text()
     if not body.strip():
-        fail("review brief is empty")
+        fail("brief is empty")
 
     target = args.target or os.environ.get("TMUX_PANE")
     if not target and not args.pane:
@@ -329,19 +389,24 @@ def cmd_send(args: argparse.Namespace) -> int:
         start_agent(pane, agent)
 
     round_number = state.get("round", 0) + 1
-    out = directory / f"round-{round_number}.review.md"
+    protocol, follow = PROTOCOLS[mode]
+    out = directory / f"round-{round_number}.{RESULT_NAME[mode]}.md"
     request = directory / f"round-{round_number}.request.md"
-    followup = FOLLOWUP.format(previous=directory / f"round-{round_number - 1}.review.md") if round_number > 1 else ""
+    followup = follow.format(previous=directory / f"round-{round_number - 1}.{RESULT_NAME[mode]}.md") if round_number > 1 else ""
 
     directory.mkdir(parents=True, exist_ok=True)
     exclude_review_dir(root)
-    request.write_text(body.rstrip() + PROTOCOL.format(session=session, round=round_number, followup=followup, out=out))
+    request.write_text(body.rstrip() + protocol.format(session=session, round=round_number, followup=followup, out=out))
     out.unlink(missing_ok=True)
 
-    (directory / "state.json").write_text(json.dumps({"agent": agent, "pane": pane, "round": round_number}, indent=2) + "\n")
-    submit(pane, f"Adversarial review request: read {request} and follow its reviewer protocol.", out)
+    (directory / "state.json").write_text(
+        json.dumps({"agent": agent, "mode": mode, "pane": pane, "round": round_number}, indent=2) + "\n"
+    )
+    kind = "Adversarial review request" if mode == "review" else "Task request"
+    submit(pane, f"{kind}: read {request} and follow the protocol at the end of it.", out)
 
-    print(f"session: {session}\nagent: {agent}\npane: {pane}\nround: {round_number}\nrequest: {request}\nreview: {out}")
+    print(f"session: {session}\nagent: {agent}\nmode: {mode}\npane: {pane}\nround: {round_number}")
+    print(f"request: {request}\nresult: {out}")
     return 0
 
 
@@ -351,14 +416,15 @@ def cmd_wait(args: argparse.Namespace) -> int:
     if not state:
         fail(f"no session state in {directory}")
     pane = state["pane"]
-    out = directory / f"round-{args.round or state['round']}.review.md"
+    mode = state.get("mode", "review")
+    out = directory / f"round-{args.round or state['round']}.{RESULT_NAME[mode]}.md"
 
     deadline = time.monotonic() + args.timeout
     idle_since: float | None = None
     previous = ""
     while not out.exists():
         if not pane_info(pane):
-            fail(f"reviewer pane {pane} is gone and {out} was never written")
+            fail(f"peer pane {pane} is gone and {out} was never written")
         screen = capture(pane)
         if BUSY.search(screen) or screen != previous:
             idle_since = None
@@ -378,8 +444,9 @@ def cmd_wait(args: argparse.Namespace) -> int:
     text = out.read_text()
     print(f"# {out}\n\n{text}")
     first_line = next((line for line in text.splitlines() if line.strip()), "")
-    if not VERDICT.match(first_line.strip()):
-        print("\nerror: first line is not `VERDICT: APPROVE|REVISE|BLOCKED`; treat this round as not approved.", file=sys.stderr)
+    if not RESULT_LINE[mode].match(first_line.strip()):
+        expected = "VERDICT: APPROVE|REVISE|BLOCKED" if mode == "review" else "STATUS: DONE|PARTIAL|BLOCKED"
+        print(f"\nerror: first line is not `{expected}`; treat this round as unfinished.", file=sys.stderr)
         return 5
     return 0
 
@@ -390,7 +457,7 @@ def cmd_peek(args: argparse.Namespace) -> int:
     if not state:
         fail(f"no session state in {directory}")
     if not pane_info(state["pane"]):
-        fail(f"reviewer pane {state['pane']} is gone")
+        fail(f"peer pane {state['pane']} is gone")
     print(tail(state["pane"], args.lines))
     return 0
 
@@ -399,24 +466,25 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
-    send = sub.add_parser("send", help="Send a review brief to a Codex/Claude reviewer pane.")
-    send.add_argument("--agent", choices=sorted(LAUNCH_ENV), help="Reviewer agent. Defaults to the other agent than the caller.")
+    send = sub.add_parser("send", help="Send a review brief or a task brief to a Codex/Claude pane.")
+    send.add_argument("--mode", choices=sorted(PROTOCOLS), help="review (default): the peer critiques and edits nothing. task: the peer does the work.")
+    send.add_argument("--agent", choices=sorted(LAUNCH_ENV), help="Peer agent. Defaults to the other agent than the caller.")
     send.add_argument("--session", help="Session slug; reuse it for later rounds. Defaults to a timestamp.")
     send.add_argument("--message-file", required=True, help="Markdown review brief, or - for stdin.")
-    send.add_argument("--pane", help='Reviewer pane as any tmux target ("%%12", ".3", "{right-of}"); marked for later reuse.')
-    send.add_argument("--new-pane", action="store_true", help="Open a new pane instead of reusing an idle reviewer pane.")
+    send.add_argument("--pane", help='Peer pane as any tmux target ("%%12", ".3", "{right-of}"); marked for later reuse.')
+    send.add_argument("--new-pane", action="store_true", help="Open a new pane instead of reusing an idle peer pane.")
     send.add_argument("--target", help="Requester pane whose window is searched or split. Defaults to $TMUX_PANE.")
     send.add_argument("--direction", choices=("auto", "right", "below"), default="auto", help="How to split the largest pane.")
     send.set_defaults(func=cmd_send)
 
-    wait = sub.add_parser("wait", help="Wait for a round's review file and print it.")
+    wait = sub.add_parser("wait", help="Wait for a round's result file and print it.")
     wait.add_argument("--session", help="Defaults to the most recently sent session.")
     wait.add_argument("--round", type=int, help="Defaults to the latest round.")
     wait.add_argument("--timeout", type=float, default=540, help="Exit 3 after this many seconds.")
-    wait.add_argument("--idle", type=float, default=30, help="Exit 4 when the pane is idle this long without a review file.")
+    wait.add_argument("--idle", type=float, default=30, help="Exit 4 when the pane is idle this long without a result file.")
     wait.set_defaults(func=cmd_wait)
 
-    peek = sub.add_parser("peek", help="Print the last lines of the reviewer pane.")
+    peek = sub.add_parser("peek", help="Print the last lines of the peer pane.")
     peek.add_argument("--session", help="Defaults to the most recently sent session.")
     peek.add_argument("--lines", type=int, default=40)
     peek.set_defaults(func=cmd_peek)

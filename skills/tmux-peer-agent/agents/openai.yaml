@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tmux Peer Agent"
+  short_description: "Review or task handoff to Claude/Codex in a tmux pane"
+  default_prompt: "Use $tmux-peer-agent to have the other agent adversarially review this plan in a tmux pane."
