@@ -1,0 +1,4 @@
+interface:
+  display_name: "Explain & Report"
+  short_description: "Explain systems with diagrams, replay, and clear reports"
+  default_prompt: "Use $explain-and-report to explain this mechanism in my language with diagrams and useful interaction, keeping artifacts outside code repositories."

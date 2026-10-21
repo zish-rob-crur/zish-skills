@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "status": "not_requested",
+  "authorized": false,
+  "authorization_scope": null,
+  "source_html_sha256": null,
+  "source_markdown_sha256": null,
+  "destination": {
+    "provider": "feishu",
+    "operation": "create_or_update_to_be_resolved",
+    "target_url_or_id": null,
+    "update_scope": null,
+    "observed_revision": null
+  },
+  "content_file": "./content.md",
+  "assets_allowlist": [],
+  "include_qa_screenshots": false,
+  "qa_destination": null,
+  "change_sharing_permissions": false,
+  "human_edits_policy": "read_before_write_and_preserve",
+  "verification": "read_back_required",
+  "notes": "示例不是可执行发布请求。填真实目标、授权范围和文件哈希；状态不得冒充实际回执。"
+}

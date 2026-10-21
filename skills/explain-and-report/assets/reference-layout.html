@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="report-kind" content="explain">
+<title>让仓库保存规则，让报告留在仓库外</title>
+<style>
+:root { --bg:#f5f5f0; --paper:#fffefa; --ink:#202b34; --muted:#53616d; --line:#d1d9d9; --accent:#075e63; --soft:#eaf3f0; --warn:#875319; --warn-bg:#faf0dc; --body:48rem; --wide:62rem; }
+* { box-sizing:border-box; }
+html { font-size:17px; scroll-padding-top:1.5rem; }
+body { margin:0; color:var(--ink); background:var(--bg); font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",system-ui,sans-serif; line-height:1.85; }
+a { color:var(--accent); text-underline-offset:.2em; overflow-wrap:anywhere; }
+a:focus-visible,button:focus-visible,summary:focus-visible { outline:3px solid var(--accent); outline-offset:4px; }
+.skip { position:fixed; top:-5rem; left:1rem; background:var(--paper); padding:.5rem 1rem; z-index:5; }.skip:focus { top:1rem; }
+.layout { display:grid; grid-template-columns:12rem minmax(0,1fr); gap:2.5rem; max-width:83rem; margin:auto; padding:2.5rem 2.2rem 5rem; }
+aside { position:sticky; top:2rem; align-self:start; min-width:0; max-height:calc(100vh - 4rem); overflow:auto; }
+.brand { font-size:.82rem; font-weight:700; letter-spacing:.08em; color:var(--accent); margin:0 0 .5rem; }
+.aside-note { font-size:.8rem; line-height:1.7; color:var(--muted); margin:.5rem 0 1.5rem; }
+nav a { display:block; padding:.6rem 0; border-bottom:1px solid var(--line); color:var(--muted); font-size:.87rem; text-decoration:none; }nav a:hover { color:var(--accent); }
+main { min-width:0; padding:2.2rem 2.5rem 3.5rem; background:var(--paper); border:1px solid var(--line); }
+.prose { max-width:var(--body); } section { margin:2.9rem 0 0; } section + section { padding-top:2rem; border-top:1px solid var(--line); }
+.eyebrow { color:var(--accent); font-size:.8rem; font-weight:700; margin:0 0 .65rem; }
+h1,h2,h3 { line-height:1.45; letter-spacing:-.02em; }h1 { font-size:2rem; margin:0 0 1rem; max-width:26em; }h2 { font-size:1.4rem; margin:0 0 1rem; }h3 { font-size:1.07rem; margin:1.8rem 0 .5rem; }
+p { margin:.8rem 0; } .lead { font-size:1.08rem; } .meta { font-size:.8rem; color:var(--muted); } strong { font-weight:650; }
+.verdict { padding:1rem 1.2rem; border:1px solid var(--line); background:var(--soft); margin:1.4rem 0; }.verdict p { margin:0; }
+.caution { padding:.85rem 1rem; background:var(--warn-bg); color:var(--warn); font-size:.9rem; }
+[data-figure-id] { scroll-margin-top:1.5rem; }
+figure { margin:1.3rem 0; }figcaption { margin:.6rem 0 0; color:var(--muted); font-size:.84rem; line-height:1.75; }
+.figure-stage { background:#f1f5f3; border:1px solid var(--line); padding:1.2rem; }
+svg { display:block; max-width:100%; height:auto; }svg text { font-family:inherit; }
+.flow { display:flex; gap:.65rem; align-items:center; }.flow-item { flex:1; min-width:0; background:var(--paper); border:1px solid var(--line); padding:.8rem; font-size:.88rem; }.flow-item strong { display:block; color:var(--accent); }.arrow { color:var(--muted); flex:0 0 auto; }
+.bar-row + .bar-row { margin-top:1.25rem; }.bar-label { display:flex; justify-content:space-between; gap:1rem; font-size:.9rem; margin-bottom:.45rem; }.bar-label strong { font-variant-numeric:tabular-nums; }.bar-track { width:100%; height:1rem; background:#dce5e2; }.bar-fill { height:100%; background:var(--accent); }.bar-fill.baseline { background:#6b7f82; }.bar-axis { display:flex; justify-content:space-between; margin-top:.6rem; font-size:.76rem; color:var(--muted); }.bar-note { font-size:.78rem; color:var(--muted); margin:.4rem 0 0; }
+.compare { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:1.4rem; }.compare > * { min-width:0; }.compare h3 { margin:0 0 .5rem; }.compare p { font-size:.94rem; }
+.table-scroll,.figure-scroll { max-width:100%; overflow-x:auto; overscroll-behavior-x:contain; }table { border-collapse:collapse; width:100%; font-size:.87rem; }caption { text-align:left; color:var(--muted); margin-bottom:.6rem; }th,td { padding:.7rem .75rem; text-align:left; vertical-align:top; border-bottom:1px solid var(--line); }th { background:var(--soft); font-weight:650; }.numeric { font-variant-numeric:tabular-nums; }
+code { font-family:ui-monospace,"SFMono-Regular",Consolas,monospace; font-size:.86em; overflow-wrap:anywhere; }p code,li code { background:var(--soft); padding:.1rem .25rem; }pre { max-width:100%; overflow:auto; padding:1rem; background:#edf1ef; line-height:1.6; }pre code { overflow-wrap:normal; }
+ul,ol { padding-left:1.4rem; }li { margin:.4rem 0; }details { border-top:1px solid var(--line); padding:.8rem 0; }summary { cursor:pointer; font-weight:600; }button { background:var(--paper); color:var(--accent); border:1px solid var(--line); padding:.5rem .8rem; font:inherit; font-size:.85rem; cursor:pointer; }[hidden] { display:none!important; }
+footer { border-top:1px solid var(--line); margin-top:2.5rem; padding-top:1rem; color:var(--muted); font-size:.8rem; }
+@media(min-width:1500px) { h1 { font-size:2.2rem; } }
+@media(max-width:1000px) { .layout { grid-template-columns:minmax(0,1fr); gap:1.2rem; padding:1.5rem; }aside { position:static; max-height:none; }.aside-note { margin:.3rem 0; }nav { display:flex; flex-wrap:wrap; gap:.3rem 1rem; }nav a { border:0; }.brand { margin:0; } }
+@media(max-width:600px) { html { font-size:17px; }.layout { padding:.85rem; gap:.7rem; }main { padding:1.4rem 1rem 2rem; }h1 { font-size:1.6rem; }h2 { font-size:1.22rem; }.compare { grid-template-columns:minmax(0,1fr); gap:1rem; }.flow { flex-direction:column; align-items:stretch; }.arrow { transform:rotate(90deg); text-align:center; }.figure-stage { padding:.8rem; }section { margin-top:2rem; } }
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
+@media print { :root { --bg:white; --paper:white; }body { background:white; font-size:11pt; } .layout { display:block; padding:0; }aside,.skip,button { display:none!important; }main { border:0; padding:0; }.prose { max-width:none; }h1 { font-size:23pt; }h2 { font-size:16pt; }a { color:inherit; }details > * { display:block!important; }figure,tr { break-inside:avoid; }.table-scroll,.figure-scroll,pre { overflow:visible; }pre { white-space:pre-wrap; }.compare { grid-template-columns:1fr 1fr; }.flow { flex-direction:row; }.arrow { transform:none; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+<div class="layout">
+<aside aria-label="报告导航">
+<p class="brand">EXPLAIN &amp; REPORT</p>
+<p class="aside-note">候选版式参考 · 0.2
+<br>合成示例，不含真实业务数据</p>
+<nav aria-label="目录"><a href="#answer">生成前的边界</a><a href="#comparison">正文与图片</a><a href="#verification">如何验收</a><a href="#appendix">补充说明</a></nav>
+</aside>
+<main id="main">
+<header class="prose">
+<p class="eyebrow">EXPLAIN / 工作方式与交付边界</p>
+<h1>让仓库保存规则，让报告留在仓库外</h1>
+<p class="lead">先讲清楚，再生成图文报告。验收留证据，分享有范围，不给代码仓库留下临时产物。</p>
+<p class="meta">风格：Editorial Technical · 参考状态：候选，未获用户批准</p>
+</header>
+
+<section id="answer" class="prose">
+<h2>保存位置不是最后一步，而是生成前的边界</h2>
+<p>这份样例展示同一套排版如何组织结论、流程、比较和补充说明。内容为设计与流程示意，不含真实客户数据，也不代表已经同步到了飞书。</p>
+<div class="verdict"><p><strong>仓库保存规则；外部目录保存结果；飞书按授权分享。</strong><br>不要先把截图写进项目，再依靠删除或忽略规则防止误提交。</p></div>
+<figure data-figure-id="storage-flow" aria-label="规则、产物和共享的三段关系">
+<div class="figure-stage">
+<div class="flow">
+<div class="flow-item"><strong>① 代码仓库</strong>Skill、模板和测试源<br>不写入业务报告或截图</div>
+<span class="arrow" aria-hidden="true">→</span>
+<div class="flow-item"><strong>② 仓库外目录</strong>报告、正文图和 QA<br>真实渲染并检查</div>
+<span class="arrow" aria-hidden="true">→</span>
+<div class="flow-item"><strong>③ 飞书文档</strong>只同步授权的正文与图<br>写入后回读验证</div>
+</div>
+</div>
+<figcaption>图 1 · 生成与发布是两个动作。保存到本地，不会自动触发远端上传。</figcaption>
+</figure>
+<p>正文图解释机制；验收截图证明页面实际怎么呈现。二者即使都叫 PNG，也有不同的保存和共享范围。</p>
+</section>
+<section id="comparison" class="prose" data-qa="dense">
+<h2>飞书版保留内容，不把整份报告变成图片</h2>
+<p>文档正文应该可编辑、可检索。流程图可以作为图片插入，但关键解释、图注、数字和来源仍然保留为文字。无法迁移的交互，需要转为静态状态与解释。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="产物用途比较">
+<table><caption>表 1 · 按用途决定怎么共享，而不是按扩展名批量上传。</caption>
+<thead><tr><th scope="col">内容</th><th scope="col">本地用途</th><th scope="col">飞书行为</th></tr></thead>
+<tbody>
+<tr><th scope="row">报告正文</th><td>连续阅读、查看证据</td><td>可编辑的段落、标题和表格</td></tr>
+<tr><th scope="row">正文图解</th><td>说明流程和关键关系</td><td>按允许清单插入，并补图注</td></tr>
+<tr><th scope="row">QA 截图</th><td>检查布局、密集段落与窄屏</td><td>默认不上传；明确要求才进验收位置</td></tr>
+<tr><th scope="row">交互细节</th><td>筛选 Trace、展开补充日志</td><td>转为关键状态与说明，标注转换限制</td></tr>
+</tbody></table>
+</div>
+<p class="caution"><strong>这是一份候选设计参考。</strong>它可以帮助约束版式，但不能自称是用户已经批准的视觉基准。</p>
+</section>
+<section id="verification" class="prose">
+<h2>验收不是“脚本没报错”</h2>
+<div class="compare">
+<div><h3>机器检查</h3><p>记录是否溢出、图片是否加载、目录是否存在，以及无 JavaScript 时核心正文是否保留。</p></div>
+<div><h3>实际看图</h3><p>判断层级是否清楚、密集区域是否可读、图中文字是否够大，以及关键关系是否容易理解。</p></div>
+</div>
+<p>两类检查都通过，也不意味着业务分析一定正确。数据与推断需要独立审查；用户是否认可设计风格，也单独记录。</p>
+</section>
+<section id="appendix" class="prose">
+<h2>附录只收纳补充内容，不隐藏结论</h2>
+<button type="button" data-expand-all hidden aria-expanded="false">展开附录</button>
+<details><summary>存储路径示意</summary><pre><code>外部工作目录/
+  delivery/       可阅读的报告
+  figures/        正文所需图
+  qa/             本次验收证据
+  publish/        最小化发布载荷与回执</code></pre><p>上述目录是流程说明，并非飞书链接，也不是用户项目里的目录。</p></details>
+<details><summary>这张参考图应该学习什么</summary><p>学习：正文宽度、标题比例、图文间距、图注与表格的关系。不要照搬：示例文案、章节数量或判断它已经通过用户批准。</p></details>
+</section>
+
+<footer>设计参考样例 · 以实际内容决定章节，不要求所有报告长得一样。</footer>
+</main>
+</div>
+<script>
+// Progressive enhancement only. Core text is present without JavaScript.
+const allDetails = Array.from(document.querySelectorAll('details'));
+const expand = document.querySelector('[data-expand-all]');
+if (expand && allDetails.length) {
+  expand.hidden = false;
+  expand.addEventListener('click', () => {
+    const next = allDetails.some(d => !d.open);
+    allDetails.forEach(d => { d.open = next; });
+    expand.textContent = next ? '收起附录' : '展开附录';
+    expand.setAttribute('aria-expanded', String(next));
+  });
+}
+let beforePrint = [];
+window.addEventListener('beforeprint', () => {
+  beforePrint = allDetails.map(d => d.open);
+  allDetails.forEach(d => { d.open = true; });
+});
+window.addEventListener('afterprint', () => {
+  allDetails.forEach((d, i) => { d.open = beforePrint[i] || false; });
+});
+</script>
+</body>
+</html>
