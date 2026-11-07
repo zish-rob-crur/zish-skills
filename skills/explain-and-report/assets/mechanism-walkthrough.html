@@ -4,80 +4,321 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
+<meta name="report-style" content="zish-technical-v1">
 <title>用户打断后，旧回复为什么不会继续入队？</title>
 <!-- Diagram/replay patterns adapted from nicobailon/visual-explainer (MIT, Nico Bailon)
      and joshuadavidthomas/agent-skills html-artifacts (MIT, Josh Thomas).
      Pinned revisions and license notices are included at the end of this file. -->
+<style id="report-theme">
+/* Zish Technical v1: shared visual identity. Layout and content remain report-specific. */
+:root {
+  color-scheme: dark;
+  --bg: #0f1418; --paper: #192128; --raised: #202a33;
+  --ink: #e8edf3; --muted: #a7b4c1; --line: #455563;
+  --accent: #f5946f; --accent-soft: #33251f;
+  --success: #79d9bd; --success-soft: #19322d;
+  --warn: #edc16e; --warn-bg: #30291b;
+  --info: #a2b2ff; --info-soft: #252c45;
+  --error: #ffaaa4; --error-soft: #392424;
+  --font: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --body: 46rem; --wide: 90rem; --radius: 8px;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: var(--reading-offset, 24px); }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.8 var(--font); }
+a { color: var(--accent); text-underline-offset: .22em; overflow-wrap: anywhere; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 3px solid var(--info); outline-offset: 4px; }
+::selection { background: var(--info-soft); color: var(--ink); }
+.skip { position: absolute; top: -80px; left: 20px; padding: 10px; background: var(--paper); z-index: 10; }
+.skip:focus { top: 12px; }
+.report { max-width: var(--wide); margin: auto; padding: 28px 40px 40px; }
+.masthead { display: flex; justify-content: space-between; align-items: center; gap: 24px; border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+.brand, .eyebrow, .section-number { color: var(--accent); font: 12px/1.6 var(--mono); letter-spacing: .08em; }
+.brand { margin: 0; }
+nav { display: flex; flex-wrap: wrap; gap: 10px 22px; }
+nav a { color: var(--muted); font-size: 13px; text-decoration: none; }
+nav a:hover { color: var(--accent); }
+.reading-layout > main { min-width: 0; }
+.reading-rail { position: relative; margin-top: 20px; padding: 12px 0; border-bottom: 1px solid var(--line); background: var(--bg); }
+.navigation-ready .reading-rail { z-index: 5; }
+details.report-outline { border: 0; padding: 0; }
+.report-outline > summary { min-height: 36px; padding-right: 145px; color: var(--muted); font-size: 13px; }
+.report-outline[open] > summary { margin-bottom: 10px; }
+.report-outline nav { display: flex; flex-direction: column; gap: 4px; max-height: 55vh; overflow-y: auto; overscroll-behavior: contain; padding: 4px; }
+.report-outline nav a { display: block; padding: 7px 10px; border-left: 2px solid transparent; line-height: 1.6; }
+.report-outline nav a[aria-current="location"] { color: var(--accent); background: var(--accent-soft); border-left-color: var(--accent); font-weight: 650; }
+.reading-progress { position: absolute; top: 12px; right: 0; width: 8rem; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.reading-progress-label { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
+.reading-progress output { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.reading-progress progress { display: block; width: 100%; height: 3px; border: 0; appearance: none; background: var(--line); accent-color: var(--accent); }
+.reading-progress progress::-webkit-progress-bar { background: var(--line); }
+.reading-progress progress::-webkit-progress-value { background: var(--accent); }
+.reading-progress progress::-moz-progress-bar { background: var(--accent); }
+@media (width < 1440px) {
+  .report.navigation-ready { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+  .navigation-ready .reading-rail {
+    position: fixed; right: calc(16px + env(safe-area-inset-right, 0px));
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    width: 10rem; max-width: calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+    margin: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--paper); box-shadow: 0 6px 24px rgb(0 0 0 / .22);
+  }
+  .navigation-ready .report-outline > summary {
+    min-height: 48px; margin: 0; padding: 10px 66px 14px 14px;
+    color: var(--ink); font-size: 14px; line-height: 1.7;
+  }
+  .navigation-ready .report-outline nav {
+    position: absolute; right: 0; bottom: calc(100% + 8px);
+    width: min(22rem, calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+    max-height: min(28rem, calc(100vh - 96px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px)));
+    max-height: min(28rem, calc(100dvh - 96px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px)));
+    padding: 8px; border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--paper); box-shadow: 0 6px 24px rgb(0 0 0 / .22);
+  }
+  .navigation-ready .reading-progress { inset: 0; width: auto; pointer-events: none; }
+  .navigation-ready .reading-progress-label { position: absolute; top: 12px; right: 14px; margin: 0; font-size: 13px; }
+  .navigation-ready .reading-progress-label > span { display: none; }
+  .navigation-ready .reading-progress progress { position: absolute; left: 8px; bottom: 6px; width: calc(100% - 16px); height: 2px; }
+}
+@media (min-width: 1440px) {
+  .report.reading-report { max-width: 108rem; padding-left: 28px; padding-right: 28px; }
+  .reading-layout { display: grid; grid-template-columns: 176px minmax(0, 1fr); gap: 28px; }
+  .reading-rail { align-self: start; margin-top: 36px; padding: 0; border: 0; }
+  .navigation-ready .reading-rail { position: sticky; top: 24px; }
+  .report-outline > summary { min-height: 0; padding-right: 0; }
+  .report-outline nav { max-height: calc(100vh - 190px); }
+  .reading-progress { position: static; width: auto; margin-top: 22px; }
+}
+.hero { padding: 36px 0 28px; }
+.eyebrow { margin: 0 0 12px; }
+h1, h2, h3, h4 { line-height: 1.4; margin: 0; font-weight: 650; text-wrap: balance; }
+h1 { font-size: clamp(32px, 3.6vw, 46px); letter-spacing: -.025em; max-width: 24em; }
+h2 { font-size: 25px; margin: 0 0 18px; }
+h3 { font-size: 19px; margin: 0 0 10px; }
+h4 { font-size: 16px; margin: 0 0 8px; }
+p { margin: 0 0 16px; }
+.lead { font-size: 19px; max-width: var(--body); margin: 20px 0 12px; }
+.meta, .note, figcaption { font-size: 13px; line-height: 1.75; color: var(--muted); }
+.prose { max-width: var(--body); }
+.wide { max-width: none; }
+.report-section { border-top: 1px solid var(--line); padding: 28px 0; }
+.section-heading { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; }
+.section-heading h2 { margin: 0; }
+.verdict, .caution { padding: 16px 20px; border-left: 3px solid var(--accent); background: var(--accent-soft); margin: 20px 0; }
+.verdict p:last-child, .caution p:last-child { margin-bottom: 0; }
+.caution { color: var(--warn); background: var(--warn-bg); border-color: var(--warn); }
+.compare, .routes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.compare > *, .routes > * { min-width: 0; }
+.component-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 12px; }
+.component, .step { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+.component p, .step p { color: var(--muted); font-size: 14px; }
+.component p:last-child, .step p:last-child { margin-bottom: 0; }
+.layer { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 16px; padding: 16px; border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius); margin: 14px 0; }
+.layer-label { align-self: center; color: var(--accent); }
+.layer-label h3 { font-size: 15px; margin: 5px 0; }
+.steps { list-style: none; padding: 0 0 0 20px; border-left: 1px solid var(--line); }
+.step { position: relative; margin: 0 0 14px; }
+.step::before { content: ""; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; position: absolute; left: -25px; top: 22px; }
+.badge { display: inline-block; color: var(--muted); border: 1px solid currentColor; border-radius: 4px; font: 11px/1.6 var(--mono); padding: 2px 7px; }
+.status-success { color: var(--success); }
+.status-warning { color: var(--warn); }
+.status-error { color: var(--error); }
+.status-proposed { color: var(--info); border-style: dashed; }
+figure { margin: 22px 0; }
+.figure-stage { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+figcaption { margin-top: 10px; }
+figure img { display: block; max-width: 100%; height: auto; }
+svg { display: block; max-width: 100%; height: auto; }
+svg text { font-family: var(--font); fill: var(--ink); }
+.diagram-scroll, .table-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
+.diagram-scroll svg { width: 100%; min-width: var(--diagram-min, 640px); }
+.node { fill: var(--raised); stroke: var(--muted); stroke-width: 1.5; }
+.node-key { fill: var(--accent-soft); stroke: var(--accent); }
+.edge { fill: none; stroke: var(--muted); stroke-width: 1.7; }
+.edge-key { stroke: var(--accent); }
+.edge-proposed, .boundary { stroke-dasharray: 6 5; }
+.boundary { fill: none; stroke: var(--muted); stroke-width: 1.5; }
+.diagram-label { fill: var(--muted); font-size: 14px; }
+.diagram-title { font-size: 17px; font-weight: 650; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+caption { text-align: left; color: var(--muted); padding-bottom: 10px; }
+th, td { text-align: left; vertical-align: top; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+th { background: var(--paper); font-weight: 650; }
+.numeric { font-variant-numeric: tabular-nums; }
+code, pre { font-family: var(--mono); }
+code { font-size: .85em; overflow-wrap: anywhere; }
+p code, li code, td code { background: var(--raised); padding: 2px 5px; border-radius: 3px; }
+pre { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; overflow: auto; font-size: 13px; line-height: 1.8; }
+pre code { font-size: inherit; overflow-wrap: normal; }
+blockquote { border-left: 2px solid var(--line); padding-left: 18px; margin: 20px 0; color: var(--muted); }
+ul, ol { padding-left: 23px; }
+li { margin: 7px 0; }
+details { border-top: 1px solid var(--line); padding: 14px 0; }
+summary { cursor: pointer; font-weight: 600; }
+details[open] > summary { margin-bottom: 18px; }
+button, select, input { font: inherit; }
+button, select { background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 5px; padding: 7px 12px; }
+button { cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+button:disabled { opacity: .55; cursor: default; }
+footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; padding-top: 18px; margin-top: 24px; }
+[hidden] { display: none !important; }
+@media (max-width: 760px) {
+  .report { padding: 20px; }
+  .masthead { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .hero { padding: 26px 0 22px; }
+  h2 { font-size: 23px; }
+  .lead { font-size: 18px; }
+  .compare, .routes, .layer { grid-template-columns: 1fr; }
+  .layer { gap: 12px; }
+  .layer-label { display: flex; gap: 12px; align-items: baseline; }
+  .figure-stage { padding: 12px; }
+  .report-section { padding: 24px 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+@media print {
+  :root { color-scheme: light; --bg: #fff; --paper: #f3f4f5; --raised: #e7ebef; --ink: #18252d; --muted: #465561; --line: #8b99a3; --accent: #9f3c21; --accent-soft: #f8e9e0; --success: #17624e; --warn: #785207; --warn-bg: #fff2cf; --info: #334e92; --error: #972e29; }
+  body { font-size: 11pt; }
+  .report { padding: 0; max-width: none; }
+  .report.reading-report { padding: 0; max-width: none; }
+  .reading-layout { display: block; }
+  .reading-rail { display: none !important; }
+  nav, .skip, button { display: none !important; }
+  h1 { font-size: 26pt; }
+  h2 { font-size: 18pt; }
+  figure, tr { break-inside: avoid; }
+  h2, h3 { break-after: avoid; }
+  details > * { display: block !important; }
+  .diagram-scroll, .table-scroll, pre { overflow: visible; }
+  .diagram-scroll svg { min-width: 0; }
+  pre { white-space: pre-wrap; }
+}
+</style>
 <style>
-:root{--bg:#f5f5f0;--paper:#fffefa;--ink:#202b34;--muted:#53616d;--line:#c7d2d0;--accent:#075e63;--soft:#eaf3f0;--warn:#875319;--warn-bg:#faf0dc}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.85 "PingFang SC","Microsoft YaHei",system-ui,sans-serif}main{max-width:1050px;margin:32px auto;padding:36px 48px 48px;background:var(--paper)}h1{font-size:32px;line-height:1.4;margin:8px 0 20px;max-width:26em}h2{font-size:23px;line-height:1.5;margin:0 0 16px}h3{font-size:18px;margin:0 0 8px}p{margin:12px 0}.kicker{color:var(--accent);font-size:14px;font-weight:700}.lead{font-size:19px;max-width:44em}.note,figcaption{color:var(--muted);font-size:15px}.answer{border-left:4px solid var(--accent);padding:8px 20px;background:var(--soft)}nav{display:flex;gap:20px;flex-wrap:wrap;margin:24px 0}a{color:var(--accent);text-underline-offset:4px}section{margin-top:40px;border-top:1px solid var(--line);padding-top:28px}figure{margin:18px 0}figcaption{margin:12px 0}.diagram-scroll{overflow-x:auto;max-width:100%;background:#f0f5f2;padding:16px}.diagram-scroll svg{display:block;width:100%;min-width:690px;height:auto}svg text{font-family:inherit;font-size:16px;fill:var(--ink)}.node{fill:var(--paper);stroke:var(--line);stroke-width:2}.decision{fill:var(--soft);stroke:var(--accent);stroke-width:2}.reject{fill:var(--warn-bg);stroke:var(--warn);stroke-width:2}.edge{fill:none;stroke:var(--accent);stroke-width:2;marker-end:url(#flow-arrow)}.edge-label{font-size:15px;fill:var(--muted)}button,input,select{font:inherit}button,select{padding:8px 12px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:4px}button{cursor:pointer}button:disabled{opacity:.45;cursor:default}button:hover:not(:disabled){border-color:var(--accent)}:focus-visible{outline:3px solid var(--accent);outline-offset:3px}.controls{display:flex;gap:12px 20px;align-items:center;flex-wrap:wrap;margin:16px 0}.settings{padding:16px;background:var(--soft)}.slider{display:flex;gap:12px;align-items:center;flex:1 1 320px;flex-wrap:wrap}input[type=range]{accent-color:var(--accent);max-width:100%;min-width:120px;flex:1}.pill{font-size:15px;font-weight:600;white-space:nowrap}.state{display:grid;grid-template-columns:1fr 2fr;gap:12px;padding:14px 0}.state strong{display:block;color:var(--accent);font-size:20px}.event-caption{padding:12px 16px;background:var(--soft);min-height:90px}.comparison{display:grid;grid-template-columns:1fr 1fr;gap:24px}.comparison article{border-top:3px solid var(--accent);padding-top:12px}.comparison article:last-child{border-color:var(--warn)}.result{font-size:21px;font-weight:650}.timeline{margin:16px 0;padding-left:24px}.timeline li{padding:8px}.timeline .selected{background:var(--soft);outline:1px solid var(--accent)}.timeline time{font-variant-numeric:tabular-nums;font-size:15px;color:var(--muted)}.lifeline{stroke:var(--line);stroke-dasharray:4 5}.message line{stroke:var(--muted);stroke-width:2;marker-end:url(#sequence-arrow)}.message.active line{stroke:var(--accent);stroke-width:4}.message.active text{font-weight:700}.message rect{fill:var(--soft)}.time-label{font-size:14px;fill:var(--muted)}.static-example{padding:12px 16px;border:1px solid var(--line)}footer{border-top:1px solid var(--line);margin-top:40px;padding-top:20px;font-size:14px;color:var(--muted)}footer a{overflow-wrap:anywhere}[hidden]{display:none!important}
-@media(max-width:700px){main{margin:0;padding:24px 18px}h1{font-size:27px}h2{font-size:21px}.comparison{grid-template-columns:1fr;gap:20px}.state{grid-template-columns:1fr}.diagram-scroll{padding:8px}.event-caption{min-height:0}.slider{flex-basis:100%}}
-@media print{body,main{background:white}main{max-width:none;margin:0;padding:0}.controls,[data-interactive]{display:none!important}.diagram-scroll{overflow:visible;padding:0}.diagram-scroll svg{min-width:0}section{break-inside:avoid}nav{display:none}}
+/* Keep replay layout and state styling local; reuse the shared visual roles. */
+.diagram-scroll svg { max-width: 1000px; }
+.diagram-scroll text { font-size: 16px; }
+.guard-map { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 24px; }
+.guard-map > *, .guard-results > * { min-width: 0; }
+.guard-map .guard-node { padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--raised); }
+.guard-map .guard-node p:last-child { margin-bottom: 0; }
+.guard-map .guard-arrow { color: var(--accent); text-align: center; margin: 12px 0; }
+.guard-map .atomic { border: 2px solid var(--accent); border-radius: var(--radius); padding: 16px; background: var(--accent-soft); }
+.guard-map .atomic > h3 { color: var(--accent); }
+.guard-map .guard-results { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.guard-map .reject-result { border-color: var(--warn); background: var(--warn-bg); }
+.controls { display: flex; gap: 12px 20px; align-items: center; flex-wrap: wrap; margin: 16px 0; }
+.settings { padding: 16px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); }
+.slider { display: flex; gap: 12px; align-items: center; flex: 1 1 320px; flex-wrap: wrap; }
+input[type=range] { accent-color: var(--accent); max-width: 100%; min-width: 120px; flex: 1; }
+.pill { font-size: 14px; font-weight: 600; white-space: nowrap; }
+.state { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; padding: 14px 0; }
+.state strong { display: block; color: var(--accent); font-size: 20px; }
+.event-caption { padding: 12px 16px; background: var(--accent-soft); min-height: 90px; }
+.comparison { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px; }
+.comparison article { border-top: 3px solid var(--accent); padding-top: 12px; }
+.comparison article:last-child { border-color: var(--warn); }
+.result { font-size: 21px; font-weight: 650; }
+.timeline { margin: 16px 0; padding-left: 24px; }
+.timeline li { padding: 8px; }
+.timeline .selected { background: var(--accent-soft); outline: 1px solid var(--accent); }
+.timeline time { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--muted); }
+.lifeline { stroke: var(--muted); stroke-dasharray: 4 5; }
+.message line { stroke: var(--muted); stroke-width: 2; marker-end: url(#sequence-arrow); }
+.message.active line { stroke: var(--accent); stroke-width: 4; }
+.message.active text { font-weight: 700; }
+.message rect { fill: var(--accent-soft); }
+.diagram-scroll .time-label { font-size: 14px; fill: var(--muted); }
+.static-example { padding: 16px 20px; border: 1px solid var(--line); border-radius: var(--radius); max-width: var(--body); }
+@media (max-width: 760px) {
+  .comparison, .state, .guard-map, .guard-map .guard-results { grid-template-columns: 1fr; }
+  .event-caption { min-height: 0; }
+  .slider { flex-basis: 100%; }
+}
+@media print { .controls, [data-interactive] { display: none !important; } }
 </style>
 </head>
 <body>
-<main>
-<header>
-<p class="kicker">机制示意 · 流程 / 事件回放 / 条件对比</p>
+<a class="skip" href="#main">跳到正文</a>
+<div class="report reading-report">
+<header class="masthead"><p class="brand">EXPLAIN &amp; REPORT</p></header>
+<div class="reading-layout">
+<aside class="reading-rail" aria-label="阅读导航">
+<details class="report-outline" open>
+<summary>目录</summary>
+<nav aria-label="报告目录"><a href="#flow">看判断位置</a><a href="#replay">跟随一次执行</a><a href="#comparison">改变条件看结果</a></nav>
+</details>
+<div class="reading-progress" data-reading-progress hidden>
+<div class="reading-progress-label"><span>阅读进度</span><output data-reading-value aria-live="off">0%</output></div>
+<progress data-reading-bar max="100" value="0" aria-label="正文阅读进度"></progress>
+</div>
+</aside>
+<main id="main">
+<header class="hero">
+<p class="eyebrow">机制示意 · 流程 / 事件回放 / 条件对比</p>
 <h1>用户打断后，旧回复为什么不会继续入队？</h1>
 <p class="lead">取消请求不保证旧任务立即停止。在这个简化模型里，打断会推进当前轮次；结果入队前再核对轮次，旧结果即使晚到，也会被拒绝。</p>
 <p class="note">合成教学示例，不对应任何已核实系统。时间仅用于演示事件顺序，不是实测延迟。</p>
-<div class="answer"><strong>关键判断发生在入队之前：</strong>结果轮次与当前轮次不一致，就丢弃。清空已有队列与拒绝未来的旧结果，是两个不同动作。</div>
-<nav><a href="#flow">看判断位置</a><a href="#replay">跟随一次执行</a><a href="#comparison">改变条件看结果</a></nav>
+
 </header>
-<section id="flow">
-<h2>① 流程图：清空队列，还需要挡住晚到的结果</h2>
+<section class="report-section" id="flow">
+<h2>清空队列，还需要挡住晚到的结果</h2>
 <figure data-figure-id="generation-gate">
-<div class="diagram-scroll">
-<svg viewBox="0 0 800 360" role="img" aria-label="打断推进轮次并清空队列；返回结果经轮次校验，不同则丢弃，相同则入队。">
-<defs><marker id="flow-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="#075e63"/></marker></defs>
-<path class="edge" d="M190 50H270"/><path class="edge" d="M520 50H620"/>
-<path class="edge" d="M145 160V210"/><path class="edge" d="M235 246H330"/>
-<path class="edge" d="M500 246H635V192"/><path class="edge" d="M500 246H635V290"/>
-<path d="M395 82V199" fill="none" stroke="#53616d" stroke-dasharray="6 5"/>
-<rect class="node" x="25" y="20" width="165" height="62" rx="6"/><text x="107" y="58" text-anchor="middle">用户打断</text>
-<rect class="decision" x="270" y="20" width="250" height="62" rx="6"/><text x="395" y="58" text-anchor="middle">当前轮次：7 → 8</text>
-<rect class="node" x="620" y="20" width="155" height="62" rx="6"/><text x="697" y="58" text-anchor="middle">清空已有队列</text>
-<text class="edge-label" x="215" y="39">推进</text><text class="edge-label" x="550" y="39">同时</text>
-<rect class="node" x="55" y="105" width="180" height="55" rx="6"/><text x="145" y="139" text-anchor="middle">生成器返回结果</text>
-<text class="edge-label" x="157" y="190">携带结果轮次</text>
-<rect class="node" x="55" y="210" width="180" height="72" rx="6"/><text x="145" y="239" text-anchor="middle">结果轮次</text><text x="145" y="264" text-anchor="middle">例如：7</text>
-<path class="decision" d="M415 199L500 246L415 293L330 246Z"/><text x="415" y="239" text-anchor="middle">与当前轮次</text><text x="415" y="263" text-anchor="middle">相同？</text>
-<text class="edge-label" x="403" y="122">读取当前值</text><text class="edge-label" x="544" y="234">否</text><text class="edge-label" x="544" y="276">是</text>
-<rect class="reject" x="560" y="135" width="180" height="57" rx="6"/><text x="650" y="170" text-anchor="middle">丢弃旧结果 ×</text>
-<rect class="node" x="560" y="290" width="180" height="55" rx="6"/><text x="650" y="324" text-anchor="middle">加入播放队列 ✓</text>
-</svg>
+<div class="figure-stage guard-map" role="group" aria-labelledby="gate-title" aria-describedby="gate-desc">
+<div>
+<h3>打断发生时</h3>
+<div class="guard-node"><strong>调度器推进当前轮次</strong><p>例如从 7 变为 8，并清空已有队列。</p></div>
+<p class="note">打断与结果返回是不同事件；此图不指定它们的先后。</p>
 </div>
-<figcaption>图 1 · 上方是打断时的动作，下方是每次结果返回时的判断。虚线表示读取当前轮次；不是另一条执行路径。关闭校验时，返回结果会直接入队。</figcaption>
+<div>
+<h3>结果返回时</h3>
+<div class="guard-node"><strong>生成器返回结果及其轮次</strong><p>例如：第 7 轮结果。</p></div>
+<p class="guard-arrow"><span aria-hidden="true">↓ </span>进入入队边界</p>
+<div class="atomic">
+<h3 id="gate-title">校验＋入队：不可插入打断</h3>
+<div class="guard-node"><strong>读取此刻的当前轮次，并与结果轮次比较</strong><p>打断推进的轮次在这里参与判断。</p></div>
+<p class="guard-arrow"><span aria-hidden="true">↓ </span>按比较结果分支</p>
+<div class="guard-results">
+<div class="guard-node"><strong>相同 → 入队 ✓</strong><p>在此边界内加入播放队列。</p></div>
+<div class="guard-node reject-result"><strong>不同 → 丢弃 ×</strong><p>例如结果轮次 7，当前轮次 8。</p></div>
+</div>
+</div>
+</div>
+</div>
+<figcaption id="gate-desc">图 1 · 橙色边框包含读取当前轮次、校验和入队；模型把它们视为不可被打断插入的一个动作。否则可能先通过校验，再发生打断，最后把旧结果放回队列。关闭校验时，返回结果直接入队。</figcaption>
 </figure>
 </section>
-<section id="replay" data-qa="dense">
-<h2>② 事件回放：看轮次、队列和拒绝原因如何一起变化</h2>
-<p>先看下面的完整案例，再单步回放。你可以改变旧结果返回时间，观察它落在打断之前还是之后。</p>
-<div class="static-example"><strong>默认案例：旧结果在 700 ms 返回。</strong>0 ms 启动第 7 轮；400 ms 打断并推进到第 8 轮、清空队列；700 ms 第 7 轮结果返回，被轮次校验拒绝；1000 ms 第 8 轮结果返回，正常入队。</div>
+<section class="report-section" id="replay" data-qa="dense">
+<h2>一次打断后，队列如何变化</h2>
+<div class="static-example"><strong>固定案例 · 开启校验，旧结果在 700 ms 返回。</strong>0 ms 启动第 7 轮；400 ms 打断并推进到第 8 轮、清空队列；700 ms 第 7 轮结果返回，被轮次校验拒绝；1000 ms 第 8 轮结果返回，正常入队。此案例不随下方参数变化。</div>
 <div data-interactive hidden>
+<h3>当前场景回放</h3>
 <div class="controls settings">
 <label for="guard">回放策略 <select id="guard"><option value="on">开启轮次校验</option><option value="off">关闭轮次校验</option></select></label>
 <div class="slider"><label for="arrival">旧结果返回时间</label><input id="arrival" type="range" min="100" max="900" step="100" value="700"><output id="arrival-value" for="arrival" class="pill">700 ms</output></div>
 </div>
 <p class="note">打断固定在 400 ms。恰好相同时，示例约定先处理打断。每个播放步骤停留 1.2 秒，只是阅读节奏，不代表实际耗时。</p>
 <figure data-figure-id="event-replay">
-<div class="diagram-scroll"><svg id="sequence" viewBox="0 0 800 380" role="img" aria-label="事件时序图，当前事件加粗；下方列出同样的事件文字。"></svg></div>
+<div class="figure-stage diagram-scroll" tabindex="0" role="region" aria-label="机制图，可横向滚动"><svg id="sequence" style="--diagram-min:800px" viewBox="0 0 800 380" role="img" aria-label="事件时序图，当前事件加粗；可展开下方的事件文字记录。"></svg></div>
 <div class="controls"><button id="previous" type="button">上一步</button><button id="play" type="button">播放</button><button id="next" type="button">下一步</button><button id="reset" type="button">回到开始</button><span id="progress" class="pill"></span></div>
 <div class="slider"><label for="step">查看事件</label><input id="step" type="range" min="0" max="3" step="1" value="3"></div>
-<div class="state"><div>当前轮次<strong id="generation"></strong></div><div>当前播放队列<strong id="queue"></strong></div></div>
+<div class="state"><div>选中事件后的轮次<strong id="generation"></strong></div><div>选中事件后的队列<strong id="queue"></strong></div></div>
 <p id="event-caption" class="event-caption"></p>
-<ol id="event-list" class="timeline"></ol>
+<details><summary>事件文字记录</summary><ol id="event-list" class="timeline"></ol></details>
 <figcaption>图 2 · 全部消息始终可见，加粗行表示选中的事件。纵向间隔按事件排列，不表示等长时间；每行时间均为示意。</figcaption>
 </figure>
 </div>
-<noscript><p class="note">当前未运行 JavaScript。上方流程图与默认案例保留完整解释；事件回放和条件调节需要 JavaScript。</p></noscript>
 </section>
-<section id="comparison">
-<h2>③ 条件对比：同一个返回结果，为什么有两种去向？</h2>
-<p>两种策略使用完全相同的事件与返回时间，只改变“入队前是否校验轮次”。</p>
+<section class="report-section" id="comparison">
+<h2>同一个返回结果，为什么有两种去向？</h2>
+<p class="prose">两种策略使用完全相同的事件与返回时间，只改变“入队前是否校验轮次”。</p>
 <figure data-figure-id="policy-comparison">
-<div class="static-example"><strong>默认条件下：</strong>700 ms 已经晚于 400 ms 的打断。开启校验时，旧结果被拒绝，最终队列只有第 8 轮；关闭校验时，旧结果重新进入已经清空的队列，最终队列包含第 7 轮和第 8 轮。</div>
+<div class="static-example"><strong>固定案例的反例：</strong>若关闭校验，晚到的旧结果会重新入队；最终队列从只有第 8 轮，变成第 7 轮和第 8 轮。</div>
 <div data-interactive hidden>
 <p id="comparison-condition" class="note"></p>
 <div class="comparison">
@@ -88,17 +329,18 @@
 <figcaption>图 3 · 把返回时间改为 300 ms，旧结果会先入队，再被 400 ms 的打断清空。这个案例说明：已经入队的旧结果与打断后才返回的旧结果，需要分别处理。</figcaption>
 </figure>
 </section>
-<section id="limits">
-<h2>这个模型没有证明什么</h2>
-<p>示例把“校验＋入队”视为一个不可分割的动作。如果实际实现允许打断插在两者之间，需要另外核查并发保护。轮次校验也不能撤回用户已经听到的声音。</p>
-<p>这里不模拟音频消费、网络重试或取消传播，只演示入队边界。最终队列是尚未消费的结果列表，不等于用户实际听到的内容。</p>
+<section class="report-section" id="limits">
+<h2>队列状态不等于实际播放结果</h2>
+<p class="prose">这里不模拟音频消费、网络重试或取消传播，只演示入队边界。最终队列是尚未消费的结果列表；轮次校验不能撤回用户已经听到的声音。</p>
 </section>
+</main>
+</div>
 <footer>
-合成可复用示例 · Explain &amp; Report 0.3.0。图解与回放模式借鉴
+合成教学示例 · Explain &amp; Report。图解与回放模式借鉴
 <a href="https://github.com/nicobailon/visual-explainer">visual-explainer</a> 与
 <a href="https://github.com/joshuadavidthomas/agent-skills/tree/main/html-artifacts">html-artifacts</a>；来源是设计参考，不是本模型的业务证据。MIT 声明随文件保存。
 </footer>
-</main>
+</div>
 <script id="mechanism-model">
 // One pure event model drives the diagram, queue, captions, and policy comparison.
 // Times and behavior are synthetic teaching assumptions, not production evidence.
@@ -154,7 +396,7 @@ function simulate({ guard = true, delay = 700 } = {}) {
     const svg = byId('sequence'); svg.replaceChildren();
     const defs = svgElement('defs', {});
     const marker = svgElement('marker',{id:'sequence-arrow',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:6,markerHeight:6,orient:'auto-start-reverse'});
-    marker.append(svgElement('path',{d:'M0 0 L10 5 L0 10Z',fill:'#53616d'})); defs.append(marker); svg.append(defs);
+    marker.append(svgElement('path',{d:'M0 0 L10 5 L0 10Z',fill:'var(--muted)'})); defs.append(marker); svg.append(defs);
     const xs = [110,300,490,700];
     ['用户','调度器','生成器','入队边界'].forEach((name,i) => {
       svg.append(svgElement('text',{x:xs[i],y:28,'text-anchor':'middle'},name));
@@ -224,6 +466,128 @@ function simulate({ guard = true, delay = 700 } = {}) {
   render();
   document.querySelectorAll('[data-interactive]').forEach(element => {element.hidden = false;});
 })();
+</script>
+<script id="report-navigation">
+/* Progressive reading navigation; static links and article content work without JS. */
+(function () {
+  'use strict';
+
+  function readingState({ top, bottom, viewportHeight, offset, sectionTops }) {
+    const distance = bottom - top - (viewportHeight - offset);
+    const atEnd = bottom <= viewportHeight + 1;
+    const fraction = atEnd ? 1 : distance > 0 ? (offset - top) / distance : 0;
+    const progress = Math.round(100 * Math.max(0, Math.min(1, fraction)));
+    let active = -1;
+    sectionTops.forEach((position, index) => {
+      if (position <= offset + 1) active = index;
+    });
+    if (atEnd && sectionTops.length) active = sectionTops.length - 1;
+    return { progress, active };
+  }
+
+  function initReadingNavigation(doc, win) {
+    const report = doc.querySelector('.report');
+    if (!report || report.classList.contains('navigation-ready')) return false;
+    const main = report.querySelector('main#main');
+    const rail = report.querySelector('.reading-rail');
+    const outline = report.querySelector('details.report-outline');
+    const nav = outline && outline.querySelector('nav');
+    const summary = outline && outline.querySelector('summary');
+    const progress = rail && rail.querySelector('[data-reading-progress]');
+    const value = progress && progress.querySelector('[data-reading-value]');
+    const bar = progress && progress.querySelector('[data-reading-bar]');
+    if (!main || !rail || !outline || !nav || !summary || !progress || !value || !bar) return false;
+
+    const entries = Array.from(nav.querySelectorAll('a[href^="#"]')).flatMap(link => {
+      let target;
+      try { target = doc.getElementById(decodeURIComponent(link.getAttribute('href').slice(1))); }
+      catch (_) { return []; }
+      return target && main.contains(target) ? [{ link, target }] : [];
+    }).sort((a, b) => {
+      const position = a.target.compareDocumentPosition(b.target);
+      return position & 2 ? 1 : position & 4 ? -1 : 0;
+    });
+    if (!entries.length) return false;
+
+    const wide = win.matchMedia('(min-width: 1440px)');
+    let queued = false;
+
+    function refresh() {
+      // Both the sidebar and floating outline leave the top of the article clear.
+      const offset = 24;
+      doc.documentElement.style.setProperty('--reading-offset', `${offset}px`);
+      const visible = entries.filter(entry => entry.target.getClientRects().length);
+      const rect = main.getBoundingClientRect();
+      const state = readingState({
+        top: rect.top, bottom: rect.bottom, viewportHeight: win.innerHeight, offset,
+        sectionTops: visible.map(entry => entry.target.getBoundingClientRect().top)
+      });
+      bar.value = state.progress;
+      value.textContent = `${state.progress}%`;
+      const active = visible[state.active];
+      entries.forEach(entry => {
+        if (entry === active) entry.link.setAttribute('aria-current', 'location');
+        else entry.link.removeAttribute('aria-current');
+      });
+    }
+
+    function schedule() {
+      if (queued) return;
+      queued = true;
+      win.requestAnimationFrame(() => { queued = false; refresh(); });
+    }
+
+    function setMode() { outline.open = wide.matches; refresh(); }
+
+    nav.addEventListener('click', event => {
+      if (wide.matches || event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey ||
+          (event.button != null && event.button !== 0)) return;
+      const link = event.target.closest && event.target.closest('a');
+      if (entries.some(entry => entry.link === link)) {
+        outline.open = false;
+        // Update the scroll offset before the browser follows the ordinary hash link.
+        refresh();
+      }
+    });
+    outline.addEventListener('keydown', event => {
+      if (event.key !== 'Escape' || !outline.open) return;
+      outline.open = false;
+      if (nav.contains(doc.activeElement)) summary.focus();
+      event.preventDefault();
+      refresh();
+    });
+    doc.addEventListener('pointerdown', event => {
+      if (!wide.matches && outline.open && !rail.contains(event.target)) {
+        outline.open = false;
+        refresh();
+      }
+    });
+    outline.addEventListener('toggle', schedule);
+    wide.addEventListener('change', setMode);
+    win.addEventListener('scroll', schedule, { passive: true });
+    for (const event of ['resize', 'hashchange', 'pageshow', 'load']) win.addEventListener(event, schedule);
+    if (win.ResizeObserver) {
+      const observer = new win.ResizeObserver(schedule);
+      observer.observe(main);
+      observer.observe(rail);
+    }
+    if (doc.fonts) doc.fonts.ready.then(schedule);
+
+    report.classList.add('navigation-ready');
+    progress.hidden = false;
+    setMode();
+    schedule();
+    return true;
+  }
+
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { readingState, initReadingNavigation };
+  } else if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => initReadingNavigation(document, window), { once: true });
+  } else {
+    initReadingNavigation(document, window);
+  }
+}());
 </script>
 </body>
 </html>

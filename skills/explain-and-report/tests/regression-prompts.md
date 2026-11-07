@@ -1,4 +1,6 @@
-# Agent Regression Tasks (Not Yet Executed or Passed)
+# Agent Regression Tasks
+
+Tasks are unexecuted unless an external run records the input, instruction, output, and review result. Preserve first failures separately from repaired results. Follow the fresh-generation and blind-reader procedure in `references/visual-qa.md`; do not use the expected behavior below as a generator or reader answer key.
 
 1. “Explain timeout versus cancel in two sentences.” Answer directly without creating a run directory.
 2. “Explain these cancellation/late-arrival events and generate HTML.” Explain the mechanism without inventing timestamps or implementation details.
@@ -30,11 +32,11 @@ These tasks are for actual Codex / Claude Code generation regressions. The packa
 
 These additions also require actual agent/browser execution before being reported as passed. The Node model tests cover model semantics, not this full regression suite.
 
-## Static diagram coverage additions (0.4; not yet executed)
+## Static diagram and editorial coverage (0.4)
 
 23. A synthetic batch has three records; a validator receives a rule set and one record independently. Explain why checking that record against the whole batch's completion requirement is a scope error. Show the batch/record relationship and converging inputs without inventing event order or hidden model reasoning.
-24. Propose separating per-record validation from batch acceptance. Draw where individual results enter the batch check and where batch criteria enter; label the proposal unverified. Do not substitute two unconnected text columns for the flow.
+24. Propose separating per-record validation from batch acceptance. Draw where individual results, batch criteria, and actual archive evidence enter the batch check; label the proposal unverified. All individual records passing with no archive record must leave batch completion unconfirmed. Do not substitute two unconnected text columns for the flow.
 25. Generate a long system explanation with several structural claims. Put an overview after the answer and limitations, and cover each essential relationship near its discussion. Do not satisfy the request with one decorative chain or require an arbitrary minimum number of figures.
 26. Only a failed result and its saved reason are available; the evaluator's internal rule is unknown. Show observed inputs and output, label inference, and do not invent a yes/no decision tree as factual behavior.
 
-27. Revise an explanation that repeats its conclusion in the title, lead, diagram, caption, and a “text version.” Give each section a distinct purpose; preserve decisive evidence, a counterexample, and the unverified status of a proposed fix. Move lookup details to an appendix. Do not equate fewer words or more figures with clarity. (Not yet independently executed.)
+27. Revise an explanation that repeats its conclusion in the title, lead, diagram, caption, and a “text version.” Give each section a distinct purpose; preserve decisive evidence, a counterexample, and the unverified status of a proposed fix. Move lookup details to an appendix. Do not equate fewer words or more figures with clarity. Record the input, first revision, checks, and independent reading in the external run; a past pass does not validate later edits.

@@ -3,76 +3,414 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>从一批记录到逐项校验：把关系画清楚</title>
+<title>一批记录怎样拆开检查，再汇总验收？</title>
+<meta name="report-style" content="zish-technical-v1">
+<style id="report-theme">
+/* Zish Technical v1: shared visual identity. Layout and content remain report-specific. */
+:root {
+  color-scheme: dark;
+  --bg: #0f1418; --paper: #192128; --raised: #202a33;
+  --ink: #e8edf3; --muted: #a7b4c1; --line: #455563;
+  --accent: #f5946f; --accent-soft: #33251f;
+  --success: #79d9bd; --success-soft: #19322d;
+  --warn: #edc16e; --warn-bg: #30291b;
+  --info: #a2b2ff; --info-soft: #252c45;
+  --error: #ffaaa4; --error-soft: #392424;
+  --font: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --body: 46rem; --wide: 90rem; --radius: 8px;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: var(--reading-offset, 24px); }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.8 var(--font); }
+a { color: var(--accent); text-underline-offset: .22em; overflow-wrap: anywhere; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 3px solid var(--info); outline-offset: 4px; }
+::selection { background: var(--info-soft); color: var(--ink); }
+.skip { position: absolute; top: -80px; left: 20px; padding: 10px; background: var(--paper); z-index: 10; }
+.skip:focus { top: 12px; }
+.report { max-width: var(--wide); margin: auto; padding: 28px 40px 40px; }
+.masthead { display: flex; justify-content: space-between; align-items: center; gap: 24px; border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+.brand, .eyebrow, .section-number { color: var(--accent); font: 12px/1.6 var(--mono); letter-spacing: .08em; }
+.brand { margin: 0; }
+nav { display: flex; flex-wrap: wrap; gap: 10px 22px; }
+nav a { color: var(--muted); font-size: 13px; text-decoration: none; }
+nav a:hover { color: var(--accent); }
+.reading-layout > main { min-width: 0; }
+.reading-rail { position: relative; margin-top: 20px; padding: 12px 0; border-bottom: 1px solid var(--line); background: var(--bg); }
+.navigation-ready .reading-rail { z-index: 5; }
+details.report-outline { border: 0; padding: 0; }
+.report-outline > summary { min-height: 36px; padding-right: 145px; color: var(--muted); font-size: 13px; }
+.report-outline[open] > summary { margin-bottom: 10px; }
+.report-outline nav { display: flex; flex-direction: column; gap: 4px; max-height: 55vh; overflow-y: auto; overscroll-behavior: contain; padding: 4px; }
+.report-outline nav a { display: block; padding: 7px 10px; border-left: 2px solid transparent; line-height: 1.6; }
+.report-outline nav a[aria-current="location"] { color: var(--accent); background: var(--accent-soft); border-left-color: var(--accent); font-weight: 650; }
+.reading-progress { position: absolute; top: 12px; right: 0; width: 8rem; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.reading-progress-label { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
+.reading-progress output { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.reading-progress progress { display: block; width: 100%; height: 3px; border: 0; appearance: none; background: var(--line); accent-color: var(--accent); }
+.reading-progress progress::-webkit-progress-bar { background: var(--line); }
+.reading-progress progress::-webkit-progress-value { background: var(--accent); }
+.reading-progress progress::-moz-progress-bar { background: var(--accent); }
+@media (width < 1440px) {
+  .report.navigation-ready { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+  .navigation-ready .reading-rail {
+    position: fixed; right: calc(16px + env(safe-area-inset-right, 0px));
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    width: 10rem; max-width: calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+    margin: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--paper); box-shadow: 0 6px 24px rgb(0 0 0 / .22);
+  }
+  .navigation-ready .report-outline > summary {
+    min-height: 48px; margin: 0; padding: 10px 66px 14px 14px;
+    color: var(--ink); font-size: 14px; line-height: 1.7;
+  }
+  .navigation-ready .report-outline nav {
+    position: absolute; right: 0; bottom: calc(100% + 8px);
+    width: min(22rem, calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+    max-height: min(28rem, calc(100vh - 96px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px)));
+    max-height: min(28rem, calc(100dvh - 96px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px)));
+    padding: 8px; border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--paper); box-shadow: 0 6px 24px rgb(0 0 0 / .22);
+  }
+  .navigation-ready .reading-progress { inset: 0; width: auto; pointer-events: none; }
+  .navigation-ready .reading-progress-label { position: absolute; top: 12px; right: 14px; margin: 0; font-size: 13px; }
+  .navigation-ready .reading-progress-label > span { display: none; }
+  .navigation-ready .reading-progress progress { position: absolute; left: 8px; bottom: 6px; width: calc(100% - 16px); height: 2px; }
+}
+@media (min-width: 1440px) {
+  .report.reading-report { max-width: 108rem; padding-left: 28px; padding-right: 28px; }
+  .reading-layout { display: grid; grid-template-columns: 176px minmax(0, 1fr); gap: 28px; }
+  .reading-rail { align-self: start; margin-top: 36px; padding: 0; border: 0; }
+  .navigation-ready .reading-rail { position: sticky; top: 24px; }
+  .report-outline > summary { min-height: 0; padding-right: 0; }
+  .report-outline nav { max-height: calc(100vh - 190px); }
+  .reading-progress { position: static; width: auto; margin-top: 22px; }
+}
+.hero { padding: 36px 0 28px; }
+.eyebrow { margin: 0 0 12px; }
+h1, h2, h3, h4 { line-height: 1.4; margin: 0; font-weight: 650; text-wrap: balance; }
+h1 { font-size: clamp(32px, 3.6vw, 46px); letter-spacing: -.025em; max-width: 24em; }
+h2 { font-size: 25px; margin: 0 0 18px; }
+h3 { font-size: 19px; margin: 0 0 10px; }
+h4 { font-size: 16px; margin: 0 0 8px; }
+p { margin: 0 0 16px; }
+.lead { font-size: 19px; max-width: var(--body); margin: 20px 0 12px; }
+.meta, .note, figcaption { font-size: 13px; line-height: 1.75; color: var(--muted); }
+.prose { max-width: var(--body); }
+.wide { max-width: none; }
+.report-section { border-top: 1px solid var(--line); padding: 28px 0; }
+.section-heading { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; }
+.section-heading h2 { margin: 0; }
+.verdict, .caution { padding: 16px 20px; border-left: 3px solid var(--accent); background: var(--accent-soft); margin: 20px 0; }
+.verdict p:last-child, .caution p:last-child { margin-bottom: 0; }
+.caution { color: var(--warn); background: var(--warn-bg); border-color: var(--warn); }
+.compare, .routes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.compare > *, .routes > * { min-width: 0; }
+.component-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 12px; }
+.component, .step { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+.component p, .step p { color: var(--muted); font-size: 14px; }
+.component p:last-child, .step p:last-child { margin-bottom: 0; }
+.layer { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 16px; padding: 16px; border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius); margin: 14px 0; }
+.layer-label { align-self: center; color: var(--accent); }
+.layer-label h3 { font-size: 15px; margin: 5px 0; }
+.steps { list-style: none; padding: 0 0 0 20px; border-left: 1px solid var(--line); }
+.step { position: relative; margin: 0 0 14px; }
+.step::before { content: ""; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; position: absolute; left: -25px; top: 22px; }
+.badge { display: inline-block; color: var(--muted); border: 1px solid currentColor; border-radius: 4px; font: 11px/1.6 var(--mono); padding: 2px 7px; }
+.status-success { color: var(--success); }
+.status-warning { color: var(--warn); }
+.status-error { color: var(--error); }
+.status-proposed { color: var(--info); border-style: dashed; }
+figure { margin: 22px 0; }
+.figure-stage { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+figcaption { margin-top: 10px; }
+figure img { display: block; max-width: 100%; height: auto; }
+svg { display: block; max-width: 100%; height: auto; }
+svg text { font-family: var(--font); fill: var(--ink); }
+.diagram-scroll, .table-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
+.diagram-scroll svg { width: 100%; min-width: var(--diagram-min, 640px); }
+.node { fill: var(--raised); stroke: var(--muted); stroke-width: 1.5; }
+.node-key { fill: var(--accent-soft); stroke: var(--accent); }
+.edge { fill: none; stroke: var(--muted); stroke-width: 1.7; }
+.edge-key { stroke: var(--accent); }
+.edge-proposed, .boundary { stroke-dasharray: 6 5; }
+.boundary { fill: none; stroke: var(--muted); stroke-width: 1.5; }
+.diagram-label { fill: var(--muted); font-size: 14px; }
+.diagram-title { font-size: 17px; font-weight: 650; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+caption { text-align: left; color: var(--muted); padding-bottom: 10px; }
+th, td { text-align: left; vertical-align: top; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+th { background: var(--paper); font-weight: 650; }
+.numeric { font-variant-numeric: tabular-nums; }
+code, pre { font-family: var(--mono); }
+code { font-size: .85em; overflow-wrap: anywhere; }
+p code, li code, td code { background: var(--raised); padding: 2px 5px; border-radius: 3px; }
+pre { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; overflow: auto; font-size: 13px; line-height: 1.8; }
+pre code { font-size: inherit; overflow-wrap: normal; }
+blockquote { border-left: 2px solid var(--line); padding-left: 18px; margin: 20px 0; color: var(--muted); }
+ul, ol { padding-left: 23px; }
+li { margin: 7px 0; }
+details { border-top: 1px solid var(--line); padding: 14px 0; }
+summary { cursor: pointer; font-weight: 600; }
+details[open] > summary { margin-bottom: 18px; }
+button, select, input { font: inherit; }
+button, select { background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 5px; padding: 7px 12px; }
+button { cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+button:disabled { opacity: .55; cursor: default; }
+footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; padding-top: 18px; margin-top: 24px; }
+[hidden] { display: none !important; }
+@media (max-width: 760px) {
+  .report { padding: 20px; }
+  .masthead { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .hero { padding: 26px 0 22px; }
+  h2 { font-size: 23px; }
+  .lead { font-size: 18px; }
+  .compare, .routes, .layer { grid-template-columns: 1fr; }
+  .layer { gap: 12px; }
+  .layer-label { display: flex; gap: 12px; align-items: baseline; }
+  .figure-stage { padding: 12px; }
+  .report-section { padding: 24px 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+@media print {
+  :root { color-scheme: light; --bg: #fff; --paper: #f3f4f5; --raised: #e7ebef; --ink: #18252d; --muted: #465561; --line: #8b99a3; --accent: #9f3c21; --accent-soft: #f8e9e0; --success: #17624e; --warn: #785207; --warn-bg: #fff2cf; --info: #334e92; --error: #972e29; }
+  body { font-size: 11pt; }
+  .report { padding: 0; max-width: none; }
+  .report.reading-report { padding: 0; max-width: none; }
+  .reading-layout { display: block; }
+  .reading-rail { display: none !important; }
+  nav, .skip, button { display: none !important; }
+  h1 { font-size: 26pt; }
+  h2 { font-size: 18pt; }
+  figure, tr { break-inside: avoid; }
+  h2, h3 { break-after: avoid; }
+  details > * { display: block !important; }
+  .diagram-scroll, .table-scroll, pre { overflow: visible; }
+  .diagram-scroll svg { min-width: 0; }
+  pre { white-space: pre-wrap; }
+}
+</style>
 <style>
-:root{--paper:#fffefa;--ink:#202b34;--muted:#53616d;--line:#c7d2d0;--accent:#075e63;--soft:#eaf3f0;--warn:#875319;--warn-bg:#faf0dc}
-*{box-sizing:border-box}body{margin:0;background:#f5f5f0;color:var(--ink);font:17px/1.85 "PingFang SC","Microsoft YaHei",system-ui,sans-serif}main{max-width:920px;margin:28px auto;padding:32px 42px;background:var(--paper)}h1{font-size:30px;line-height:1.45;margin:0 0 16px}h2{font-size:23px;line-height:1.5;margin:32px 0 12px}p{margin:12px 0}.lead{font-size:19px}.note,figcaption{font-size:15px;color:var(--muted)}figure{margin:18px 0 28px}figcaption{margin-top:10px}a{color:var(--accent)}nav{display:flex;flex-wrap:wrap;gap:20px}footer{border-top:1px solid var(--line);margin-top:28px;padding-top:16px;font-size:14px;color:var(--muted)}:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
-/* Copy this block with the figures. Each SVG owns unique marker IDs. */
-.topology-scroll{max-width:100%;overflow-x:auto;background:#f1f5f3;border:1px solid var(--line);padding:12px}.topology{display:block;width:100%;min-width:650px;max-width:none;height:auto}.topology text{font-family:inherit;font-size:17px;fill:var(--ink)}.topology .label{font-size:16px;fill:var(--muted)}.topology .heading{font-weight:650;fill:var(--accent)}.topology .node{fill:var(--paper);stroke:var(--line);stroke-width:1.5}.topology .key{fill:var(--soft);stroke:var(--accent);stroke-width:1.8}.topology .problem{fill:var(--warn-bg);stroke:var(--warn);stroke-width:1.8}.topology .boundary{fill:none;stroke:var(--muted);stroke-width:1.4;stroke-dasharray:7 5}.topology .edge{fill:none;stroke:var(--accent);stroke-width:2}.topology .proposed{stroke-dasharray:7 5}.diagram-hint{font-size:14px;color:var(--muted);margin:0 0 6px}
-@media(max-width:700px){main{margin:0;padding:22px 18px}h1{font-size:27px}.topology-scroll{padding:8px}}
-@media print{body,main{background:white}main{margin:0;padding:0;max-width:none}nav,.diagram-hint{display:none}.topology-scroll{overflow:visible;padding:0;border:0}.topology{min-width:0}figure{break-inside:avoid}}
+/* Native nodes preserve text size and reflow without a second diagram. */
+.batch-map { max-width: 960px; }
+.batch-map p:last-child { margin-bottom: 0; }
+.batch-map .map-node { min-width: 0; padding: 14px 16px; background: var(--raised); border: 1px solid var(--line); border-radius: var(--radius); }
+.batch-map .map-node strong { display: block; }
+.batch-map .map-node p { margin: 6px 0 0; }
+.batch-map .map-key { border-color: var(--accent); background: var(--accent-soft); }
+.batch-map .map-unknown { border-color: var(--warn); background: var(--warn-bg); }
+.batch-map .map-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.batch-map .map-row.triple { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.batch-map .map-arrow { margin: 12px 0; text-align: center; color: var(--accent); }
+.batch-map .contains { margin: 14px 0 0; padding: 14px; list-style: none; border: 1px solid var(--line); border-radius: var(--radius); }
+.batch-map .contains li { margin: 0; }
+.batch-map .candidate { padding: 16px; border: 1px dashed var(--info); border-radius: var(--radius); }
+.batch-map .candidate > h3 { color: var(--info); }
+@media (max-width: 760px) {
+  .batch-map .map-row, .batch-map .map-row.triple { grid-template-columns: 1fr; }
+  .batch-map .contains, .batch-map .candidate { padding: 12px; }
+}
 </style>
 </head>
-<body><main>
-<header><h1>一批记录怎样拆开检查，再汇总验收？</h1>
-<p class="lead">逐项校验回答“这一条是否合格”；整批验收使用各条结果，再检查整批要求。规则和记录是两个独立输入。</p>
-<p class="note">合成教学示例。这里假设每条记录只检查必填项，整批另有归档要求；不对应任何真实系统。所有图均为静态 SVG，无需 JavaScript。</p></header>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+<div class="report reading-report">
+<header class="masthead"><p class="brand">EXPLAIN &amp; REPORT</p></header>
+<div class="reading-layout">
+<aside class="reading-rail" aria-label="阅读导航">
+<details class="report-outline" open>
+<summary>目录</summary>
 <nav aria-label="目录"><a href="#overview">任务结构</a><a href="#inputs">输入与分支</a><a href="#boundary">汇总边界</a></nav>
-<section id="overview"><h2>1. 一批包含三项，不代表三项依次执行</h2>
+</details>
+<div class="reading-progress" data-reading-progress hidden>
+<div class="reading-progress-label"><span>阅读进度</span><output data-reading-value aria-live="off">0%</output></div>
+<progress data-reading-bar max="100" value="0" aria-label="正文阅读进度"></progress>
+</div>
+</aside>
+<main id="main">
+<header class="hero"><p class="eyebrow">批次校验 / 合成示例</p><h1>一批记录怎样拆开检查，再汇总验收？</h1>
+<p class="lead">逐项校验回答“这一条是否合格”；整批验收使用各条结果，再检查整批要求。归档是否完成，需要另外的记录来证明。</p>
+<p class="note">合成教学示例。这里假设每条记录只检查必填项，整批另有归档要求；不对应任何真实系统。</p></header>
+
+<section class="report-section" id="overview"><h2>1. 一批包含三项，不代表三项依次执行</h2>
 <figure data-figure-id="batch-structure">
-<p class="diagram-hint">窄屏可在图内横向滚动，保留标签字号。</p>
-<div class="topology-scroll" tabindex="0" role="region" aria-label="批次结构图，可横向滚动">
-<svg class="topology" viewBox="0 0 720 290" role="img" aria-labelledby="batch-title batch-desc" xmlns="http://www.w3.org/2000/svg">
-<title id="batch-title">一个批次包含三条待处理记录</title><desc id="batch-desc">批次分别连接记录 A、B、C。三条记录没有相互连接，箭头仅表示包含关系，不表示顺序或并行。</desc>
-<defs><marker id="batch-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#075e63"/></marker></defs>
-<g class="edge" marker-end="url(#batch-arrow)"><path d="M360 92V140H125V184"/><path d="M360 92V184"/><path d="M360 92V140H595V184"/></g>
-<rect class="key" x="210" y="20" width="300" height="72" rx="7"/><text class="heading" x="360" y="49" text-anchor="middle">批次任务</text><text x="360" y="75" text-anchor="middle">检查三条记录，并完成归档</text>
-<text class="label" x="90" y="128">包含 A</text><text class="label" x="374" y="166">包含 B</text><text class="label" x="560" y="128">包含 C</text>
-<rect class="node" x="25" y="184" width="200" height="78" rx="7"/><text class="heading" x="125" y="215" text-anchor="middle">记录 A</text><text x="125" y="241" text-anchor="middle">单独检查必填项</text>
-<rect class="node" x="260" y="184" width="200" height="78" rx="7"/><text class="heading" x="360" y="215" text-anchor="middle">记录 B</text><text x="360" y="241" text-anchor="middle">单独检查必填项</text>
-<rect class="node" x="495" y="184" width="200" height="78" rx="7"/><text class="heading" x="595" y="215" text-anchor="middle">记录 C</text><text x="595" y="241" text-anchor="middle">单独检查必填项</text>
-</svg></div>
-<figcaption>图 1 · 这是任务层级。每条记录负责自身内容，整批归档仍属于批次任务；图中没有执行时序信息。</figcaption>
+<div class="figure-stage batch-map" role="group" aria-labelledby="batch-title" aria-describedby="batch-desc">
+<div class="map-node map-key">
+<h3 id="batch-title">批次任务：检查三条记录，并完成归档</h3>
+<p class="note">下列记录属于同一批次；这里没有指定执行顺序。</p>
+<ul class="contains map-row triple">
+<li class="map-node"><strong>记录 A</strong><p>单独检查必填项</p></li>
+<li class="map-node"><strong>记录 B</strong><p>单独检查必填项</p></li>
+<li class="map-node"><strong>记录 C</strong><p>单独检查必填项</p></li>
+</ul>
+</div>
+</div>
+<figcaption id="batch-desc">图 1 · 外框表示批次包含 A、B、C。记录之间没有连线；整批归档属于批次任务，不属于任一条记录的必填项检查。</figcaption>
 </figure></section>
-<section id="inputs"><h2>2. 规则和记录汇合后，才进行条件判断</h2>
+<section class="report-section" id="inputs"><h2>2. 规则和记录共同决定单条结果</h2>
 <figure data-figure-id="input-merge-decision">
-<div class="topology-scroll" tabindex="0" role="region" aria-label="输入汇合与分支图，可横向滚动">
-<svg class="topology" viewBox="0 0 720 490" role="img" aria-labelledby="merge-title merge-desc" xmlns="http://www.w3.org/2000/svg">
-<title id="merge-title">规则与记录分别进入校验器，再按必填项是否齐全分流</title><desc id="merge-desc">规则定义需要什么，记录提供当前内容。校验器比较两者；必填项齐全则输出合格，缺失则输出待补充。</desc>
-<defs><marker id="merge-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#075e63"/></marker></defs>
-<g class="edge" marker-end="url(#merge-arrow)"><path d="M175 96V140H300V174"/><path d="M545 96V140H420V174"/><path d="M360 238V272"/><path d="M250 324H175V412"/><path d="M470 324H545V412"/></g>
-<rect class="node" x="40" y="24" width="270" height="72" rx="7"/><text class="heading" x="175" y="53" text-anchor="middle">输入 A · 当前适用规则</text><text x="175" y="79" text-anchor="middle">定义必填项</text>
-<rect class="node" x="410" y="24" width="270" height="72" rx="7"/><text class="heading" x="545" y="53" text-anchor="middle">输入 B · 当前记录</text><text x="545" y="79" text-anchor="middle">提供已有字段</text>
-<text class="label" x="190" y="125">传入要求</text><text class="label" x="435" y="125">传入内容</text>
-<rect class="key" x="230" y="174" width="260" height="64" rx="7"/><text class="heading" x="360" y="213" text-anchor="middle">校验器逐项比较</text>
-<path class="key" d="M360 272L470 324L360 376L250 324Z"/><text x="360" y="320" text-anchor="middle">必填项</text><text x="360" y="345" text-anchor="middle">齐全？</text>
-<text class="label" x="85" y="372">是 · 全部具备</text><text class="label" x="560" y="372">否 · 有缺失</text>
-<rect class="node" x="55" y="412" width="240" height="56" rx="7"/><text x="175" y="447" text-anchor="middle">输出：此条合格</text>
-<rect class="problem" x="425" y="412" width="240" height="56" rx="7"/><text x="545" y="447" text-anchor="middle">输出：此条待补充</text>
-</svg></div>
-<figcaption>图 2 · 两个输入共同决定结果；规则并不生成记录。这里的判断分支来自示例明确规定的规则，不代表某个模型的隐含思考。</figcaption>
+<div class="figure-stage batch-map" role="group" aria-labelledby="merge-title" aria-describedby="merge-desc">
+<div class="map-row">
+<div class="map-node"><strong>输入 A · 当前适用规则</strong><p>定义哪些字段必填。</p></div>
+<div class="map-node"><strong>输入 B · 当前记录</strong><p>提供这条记录已有的字段。</p></div>
+</div>
+<p class="map-arrow"><span aria-hidden="true">↓ </span>两个输入共同进入校验器</p>
+<div class="map-node map-key"><h3 id="merge-title">逐项比较：必填项是否齐全？</h3></div>
+<p class="map-arrow"><span aria-hidden="true">↓ </span>按判断结果分支</p>
+<div class="map-row">
+<div class="map-node"><strong>是 · 全部具备</strong><p>输出：此条合格</p></div>
+<div class="map-node map-unknown"><strong>否 · 有缺失</strong><p>输出：此条待补充，并列出缺失项</p></div>
+</div>
+</div>
+<figcaption id="merge-desc">图 2 · 规则给出要求，记录给出内容，校验器比较两者。规则不生成记录；两个输出是互斥分支，不是连续步骤。</figcaption>
 </figure></section>
-<section id="boundary"><h2>3. 汇总接收逐项结果，再检查整批要求</h2>
-<p>下面是职责分离的候选设计。逐项校验保留自己的要求，批次验收再检查整体完成情况。</p>
+<section class="report-section" id="boundary"><h2>3. A、B、C 都通过，仍可能缺少归档证据</h2>
 <figure data-figure-id="aggregation-boundary">
-<div class="topology-scroll" tabindex="0" role="region" aria-label="逐项与整批验收边界图，可横向滚动">
-<svg class="topology" viewBox="0 0 720 490" role="img" aria-labelledby="boundary-title boundary-desc" xmlns="http://www.w3.org/2000/svg">
-<title id="boundary-title">候选职责分离：逐项结果汇入整批验收</title><desc id="boundary-desc">逐项检查输出 A、B、C 的结果。整批验收接收这些结果以及整批要求，输出完成状态与未完成项。虚线边框表示职责边界，虚线箭头表示建议的数据流。</desc>
-<defs><marker id="boundary-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#075e63"/></marker></defs>
-<rect class="boundary" x="20" y="16" width="680" height="136" rx="8"/><text class="heading" x="40" y="48">逐项检查的职责</text>
-<rect class="boundary" x="20" y="226" width="680" height="246" rx="8"/><text class="heading" x="40" y="259">整批验收的职责 · 候选，尚未验证</text>
-<g class="edge proposed" marker-end="url(#boundary-arrow)"><path d="M130 130V184H450V294"/><path d="M360 130V184H450V294"/><path d="M590 130V184H450V294"/><path d="M280 326H350"/><path d="M500 358V400"/></g>
-<rect class="node" x="40" y="72" width="180" height="58" rx="7"/><text x="130" y="108" text-anchor="middle">A 的检查结果</text>
-<rect class="node" x="270" y="72" width="180" height="58" rx="7"/><text x="360" y="108" text-anchor="middle">B 的检查结果</text>
-<rect class="node" x="500" y="72" width="180" height="58" rx="7"/><text x="590" y="108" text-anchor="middle">C 的检查结果</text>
-<text class="label" x="462" y="212">汇入各条状态与缺失项</text>
-<rect class="node" x="40" y="294" width="240" height="64" rx="7"/><text x="160" y="321" text-anchor="middle">整批要求</text><text class="label" x="160" y="345" text-anchor="middle">全部处理，并完成归档</text>
-<text class="label" x="285" y="309">约束</text>
-<rect class="key" x="350" y="294" width="300" height="64" rx="7"/><text class="heading" x="500" y="333" text-anchor="middle">检查批次完成情况</text>
-<text class="label" x="515" y="385">输出</text>
-<rect class="node" x="350" y="400" width="300" height="52" rx="7"/><text x="500" y="433" text-anchor="middle">完成状态 ＋ 未完成项</text>
-</svg></div>
-<figcaption>图 3 · 虚线箭头是候选数据流，虚线框是职责边界。整体是否完成取决于各条结果与整批要求；单条合格不能直接证明整批完成。</figcaption>
+<div class="figure-stage batch-map" role="group" aria-labelledby="boundary-title" aria-describedby="boundary-desc">
+<div class="map-row triple">
+<div class="map-node"><strong>逐项检查结果</strong><p>A：通过<br>B：通过<br>C：通过</p><p class="note">只证明三条记录的必填项齐全。</p></div>
+<div class="map-node"><strong>整批要求</strong><p>每条记录通过检查，并且整批已归档。</p><p class="note">这是验收条件，不是完成证据。</p></div>
+<div class="map-node map-unknown"><strong>独立归档证据</strong><p>归档记录：缺失</p><p class="note">当前无法核实是否已归档。</p></div>
+</div>
+<p class="map-arrow"><span aria-hidden="true">↓ </span>三项输入共同进入整批验收</p>
+<div class="candidate">
+<h3 id="boundary-title">整批验收 · 候选职责，尚未验证</h3>
+<div class="map-node map-key"><strong>每条通过，且归档记录确认已完成？</strong><p>两项都得到证据支持，才可确认整批完成。</p></div>
+<p class="map-arrow"><span aria-hidden="true">↓ </span>本例：逐项通过，归档证据缺失</p>
+<div class="map-node map-unknown"><strong>结果：无法确认整批完成</strong><p>待核实项：归档状态。</p></div>
+</div>
+</div>
+<figcaption id="boundary-desc">图 3 · 逐项结果、整批要求和归档记录是三个独立输入；虚线框标出候选验收职责。A、B、C 均通过，但归档记录缺失，因此输出“归档待核实”。缺少记录也不能反推出“尚未归档”。</figcaption>
 </figure></section>
-<footer>Explain &amp; Report · 合成静态图示。复用时替换节点、连线、条件和证据状态；保留每幅 SVG 独有的 marker / title / desc ID。</footer>
-</main></body></html>
+</main>
+</div>
+<footer>Explain &amp; Report</footer>
+</div>
+<script id="report-navigation">
+/* Progressive reading navigation; static links and article content work without JS. */
+(function () {
+  'use strict';
+
+  function readingState({ top, bottom, viewportHeight, offset, sectionTops }) {
+    const distance = bottom - top - (viewportHeight - offset);
+    const atEnd = bottom <= viewportHeight + 1;
+    const fraction = atEnd ? 1 : distance > 0 ? (offset - top) / distance : 0;
+    const progress = Math.round(100 * Math.max(0, Math.min(1, fraction)));
+    let active = -1;
+    sectionTops.forEach((position, index) => {
+      if (position <= offset + 1) active = index;
+    });
+    if (atEnd && sectionTops.length) active = sectionTops.length - 1;
+    return { progress, active };
+  }
+
+  function initReadingNavigation(doc, win) {
+    const report = doc.querySelector('.report');
+    if (!report || report.classList.contains('navigation-ready')) return false;
+    const main = report.querySelector('main#main');
+    const rail = report.querySelector('.reading-rail');
+    const outline = report.querySelector('details.report-outline');
+    const nav = outline && outline.querySelector('nav');
+    const summary = outline && outline.querySelector('summary');
+    const progress = rail && rail.querySelector('[data-reading-progress]');
+    const value = progress && progress.querySelector('[data-reading-value]');
+    const bar = progress && progress.querySelector('[data-reading-bar]');
+    if (!main || !rail || !outline || !nav || !summary || !progress || !value || !bar) return false;
+
+    const entries = Array.from(nav.querySelectorAll('a[href^="#"]')).flatMap(link => {
+      let target;
+      try { target = doc.getElementById(decodeURIComponent(link.getAttribute('href').slice(1))); }
+      catch (_) { return []; }
+      return target && main.contains(target) ? [{ link, target }] : [];
+    }).sort((a, b) => {
+      const position = a.target.compareDocumentPosition(b.target);
+      return position & 2 ? 1 : position & 4 ? -1 : 0;
+    });
+    if (!entries.length) return false;
+
+    const wide = win.matchMedia('(min-width: 1440px)');
+    let queued = false;
+
+    function refresh() {
+      // Both the sidebar and floating outline leave the top of the article clear.
+      const offset = 24;
+      doc.documentElement.style.setProperty('--reading-offset', `${offset}px`);
+      const visible = entries.filter(entry => entry.target.getClientRects().length);
+      const rect = main.getBoundingClientRect();
+      const state = readingState({
+        top: rect.top, bottom: rect.bottom, viewportHeight: win.innerHeight, offset,
+        sectionTops: visible.map(entry => entry.target.getBoundingClientRect().top)
+      });
+      bar.value = state.progress;
+      value.textContent = `${state.progress}%`;
+      const active = visible[state.active];
+      entries.forEach(entry => {
+        if (entry === active) entry.link.setAttribute('aria-current', 'location');
+        else entry.link.removeAttribute('aria-current');
+      });
+    }
+
+    function schedule() {
+      if (queued) return;
+      queued = true;
+      win.requestAnimationFrame(() => { queued = false; refresh(); });
+    }
+
+    function setMode() { outline.open = wide.matches; refresh(); }
+
+    nav.addEventListener('click', event => {
+      if (wide.matches || event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey ||
+          (event.button != null && event.button !== 0)) return;
+      const link = event.target.closest && event.target.closest('a');
+      if (entries.some(entry => entry.link === link)) {
+        outline.open = false;
+        // Update the scroll offset before the browser follows the ordinary hash link.
+        refresh();
+      }
+    });
+    outline.addEventListener('keydown', event => {
+      if (event.key !== 'Escape' || !outline.open) return;
+      outline.open = false;
+      if (nav.contains(doc.activeElement)) summary.focus();
+      event.preventDefault();
+      refresh();
+    });
+    doc.addEventListener('pointerdown', event => {
+      if (!wide.matches && outline.open && !rail.contains(event.target)) {
+        outline.open = false;
+        refresh();
+      }
+    });
+    outline.addEventListener('toggle', schedule);
+    wide.addEventListener('change', setMode);
+    win.addEventListener('scroll', schedule, { passive: true });
+    for (const event of ['resize', 'hashchange', 'pageshow', 'load']) win.addEventListener(event, schedule);
+    if (win.ResizeObserver) {
+      const observer = new win.ResizeObserver(schedule);
+      observer.observe(main);
+      observer.observe(rail);
+    }
+    if (doc.fonts) doc.fonts.ready.then(schedule);
+
+    report.classList.add('navigation-ready');
+    progress.hidden = false;
+    setMode();
+    schedule();
+    return true;
+  }
+
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { readingState, initReadingNavigation };
+  } else if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => initReadingNavigation(document, window), { once: true });
+  } else {
+    initReadingNavigation(document, window);
+  }
+}());
+</script>
+</body></html>

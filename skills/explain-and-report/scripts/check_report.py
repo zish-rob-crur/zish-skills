@@ -7,6 +7,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 import re
 import sys
+from apply_report_theme import THEME_PATH, check_theme
 
 
 class ReportParser(HTMLParser):
@@ -111,6 +112,7 @@ def check_html(text: str) -> tuple[list[str], list[str]]:
 def main() -> int:
     argp = argparse.ArgumentParser(description=__doc__)
     argp.add_argument('report', type=Path)
+    argp.add_argument('--require-theme', action='store_true', help='Check that the current shared CSS is embedded unchanged; does not inspect computed styles.')
     args = argp.parse_args()
     try:
         text = args.report.read_text(encoding='utf-8')
@@ -118,6 +120,12 @@ def main() -> int:
         print(f'ERROR: {exc}', file=sys.stderr)
         return 2
     errors, warnings = check_html(text)
+    if args.require_theme:
+        try:
+            errors.extend(check_theme(text, THEME_PATH.read_text(encoding='utf-8')))
+        except (OSError, UnicodeError) as exc:
+            print(f'ERROR: Cannot read shared theme: {exc}', file=sys.stderr)
+            return 2
     for message in errors:
         print('ERROR:', message)
     for message in warnings:

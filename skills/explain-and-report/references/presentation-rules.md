@@ -15,11 +15,15 @@ Adapted from the composition principles in `writing-clearly-and-concisely` (Will
 
 For example, replace “The validation scope exhibits cross-item semantic contamination” with “The validator checks one record against requirements for the entire batch.” Then provide the evidence and consequence once. This is a synthetic writing example, not a finding about the user's system.
 
+Introduce unfamiliar terms where readers first need them, including labels in the first diagram. A short role beside a technical name is often enough; do not make readers wait for a later glossary. Use headings that name the subject or state a supported finding. Keep production language such as “now explain the mechanism” out of the report.
+
+State shared scope limitations once near the judgment. Retain a local qualification where it changes the meaning of a specific claim; avoid repeating a general disclaimer in every recommendation. When a decision is needed, state the recommended choice, the evidence that determines it, and the condition that would change it. For implementation advice, also name the observable result that would verify the change. Do not invent owners, dates, or action lists for a purely explanatory report.
+
 ## Edit prose and figures together
 
-Give each claim a primary place. A figure can explain inputs and branches while the adjacent paragraph supplies evidence or implications. Do not repeat the full path in a heading, lead, node labels, caption, and follow-up paragraph. Keep a concise SVG description or text equivalent for nonvisual readers; avoid making all readers reread it.
+Give each claim a primary place. A short lead may preview the conclusion; the body earns it with evidence and explanation. A figure can explain inputs and branches while the adjacent paragraph supplies evidence or implications. Do not repeat the full path in a heading, lead, node labels, caption, and follow-up paragraph. Keep a concise SVG description or text equivalent for nonvisual readers; avoid making all readers reread it.
 
-After drafting, name what each paragraph and figure adds. If two add the same thing, combine them or remove one. If removing a section does not change the answer, evidence, limitations, or next action, delete it or move genuinely useful reference detail to an appendix. Review the resulting causal chain for gaps; word-count reduction alone is not acceptance.
+After drafting, read the article in order and name what each paragraph and figure adds. Include template-supplied introductions, captions, callouts, and endings in this pass. If two add the same thing, combine them or remove one. End when the explanation is complete; a closing recap is optional. If removing a section does not change the answer, evidence, limitations, or next action, delete it or move genuinely useful reference detail to an appendix. Review the resulting causal chain for gaps; word-count reduction alone is not acceptance.
 
 ## Reading hierarchy within a page
 
@@ -38,7 +42,7 @@ For small samples, show counts such as “7 / 8” alongside percentages rather 
 - Distinguish missing, failed, not run, and zero.
 - Do not mix percentage points with relative percentages: 75% → 87.5% is +12.5 percentage points, not +12.5%.
 - Calculate aggregate pass rate as total successes / total valid samples. Do not take an unweighted mean of percentages from differently sized groups.
-- State the quantile calculation method. Do not infer p95 from a mean or average group p95 values to obtain an overall p95.
+- Keep statistical qualifiers in prose and labels: “p95 is 1.3 seconds” is not “finishes in 1.3 seconds.” Explain the population and exclusions beside a comparison; put full quantile formulas in methods when they are only needed for verification. Do not infer p95 from a mean or average group p95 values to obtain an overall p95.
 - Do not invent confidence intervals, error bars, or significance without raw samples.
 - For version comparisons, state whether cases, configurations, random conditions, and sampling match. Different samples are not a paired experiment.
 - Bar charts start at zero by default. Explicitly label and justify truncated axes; avoid misleading dual vertical axes.
@@ -68,6 +72,12 @@ If a reference is not accessible across machines, provide locator details rather
 
 ## Reading and interaction
 
+### Reading navigation
+
+Long reports use a persistent outline: a side rail on wide screens and a compact bottom-right floating entry on narrower screens. The entry combines the directory, percentage, and a thin progress bar; the directory opens upward in a bounded, scrollable panel. Keep one static set of links using section titles or recognizable short labels and valid anchors. Leave enough clearance to scroll the final text and links above the entry. A short report may need only ordinary section links.
+
+Use the shell's native `details` outline and inline `assets/report-navigation.js`. Without JS, the directory remains inline and progress stays hidden. With JS, the current section is marked and the narrow-screen entry initially collapses. Selecting a link or tapping outside closes its panel; Escape closes it and restores focus from a directory link to the entry. Opening the panel must not change reading progress or the anchor inset. Progress follows the scrollable `main` content, excluding the footer; a fully visible short article is 100%. This percentage describes page position, not comprehension or estimated reading time.
+
 ### Evidence images
 
 Include task-provided or otherwise authorized images that help establish a finding, such as an error dialog, a failed result, or a relevant before/after view. Inspect the image before selecting it. Choose the clearest representative image for each distinct finding; do not dump an image directory or add decorative screenshots.
@@ -84,7 +94,7 @@ Add interaction only when it helps answer the question: filtering cases, locatin
 Do not force repeated “Next” clicks just to reveal the complete explanation.
 
 Use normal DOM for body text and clear labels/explanations for SVG. Scroll long code and wide tables locally.
-Choose type size, line spacing, and font fallbacks for the output language and reading context. Check body text and diagram labels at actual rendered size. Embed any required font assets so the artifact works offline.
+Start with the shared theme's type hierarchy and font fallbacks. Adapt for language coverage or accessibility while preserving its visual roles. Check body text and diagram labels at actual rendered size. Embed any required font assets so the artifact works offline.
 
 Browser review covers the first screen, densest content, and appendices; a title screenshot is insufficient.
 Without a browser, honestly list completed checks. Do not fabricate screenshots, console results, or offline tests.

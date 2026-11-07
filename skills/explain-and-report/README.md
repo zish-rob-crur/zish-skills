@@ -1,6 +1,6 @@
 # Explain & Report · v0.4.1
 
-Explain complex content clearly, then choose diagrams, tables, sequences, or prose to express it. Use for technical explanations, system analysis, business workflows, agent traces, and evaluation reports. This is not a general-purpose web design framework.
+Create a technical report that readers can understand and inspect: a clear judgment, diagrams that expose the mechanism, and evidence that supports the conclusion. Combine the reading rhythm of a technical magazine with the structural precision of an engineering atlas. Use for technical explanations, system analysis, business workflows, agent traces, and evaluation reports.
 
 The default deliverable is `report.html` only. A Markdown version is generated only on explicit request.
 Relevant available evidence images, including error screenshots, are embedded in the HTML by default with short captions. Screenshots of the report's own layout checks stay in QA storage.
@@ -11,7 +11,11 @@ Relevant available evidence images, including error screenshots, are embedded in
 
 Skill instructions, evidence rules, design intent, optional HTML examples, external-workspace scripts, static preflight, an optional screenshot script, and a publishing workflow that reuses existing Feishu skills.
 
-The model chooses the report's visual identity and composition for its subject and audience. The bundled templates are references, not a prescribed style. Review focuses on clarity, evidence, and usability.
+Reports share the **Zish Technical** identity in `assets/report-theme.css`: charcoal surfaces, orange emphasis, consistent typography, and reusable diagram/status styles. The model chooses content composition; magazine, brief, case study, and architecture atlas retain the same identity. A different theme requires a user request.
+
+The complete synthetic references show two reading paths: `assets/reference-layout.html` explains a mechanism; `assets/reference-report.html` supports a scoped decision with evidence, tradeoffs, and conditions for changing it. The flow and replay assets are component examples. Reuse relevant parts without treating their combined contents as a report outline.
+
+Long reports include a sticky side outline on wide screens and a compact bottom-right directory entry on narrower screens, with a percentage and thin progress bar. The directory opens upward; current-section highlighting helps readers locate themselves. Without JavaScript, the directory remains inline and progress stays hidden. Short reports may use simpler navigation.
 
 This is not a standalone Feishu synchronization client and does not bundle credentials or external skills. The agent uses document tools actually installed and authorized in your environment. Local reports work without Feishu.
 
@@ -51,17 +55,17 @@ fi
 
 Confirm the installed path is `<DEST>/explain-and-report/SKILL.md`, without an extra version directory. Do not keep multiple versions of the same name in discovery directories. If the host has not refreshed, start a new session and recheck its skill list.
 
-Teams may version **this source package**. It contains no PNG/JPEG files, run screenshots, or actual business reports. `assets/reference-layout.html` is a synthetic design-test source that can be rendered as a reference, not QA evidence from a report run.
+Teams may version **this source package**. It contains no PNG/JPEG files, run screenshots, or actual business reports. The two reference HTML files are reusable synthetic sources, not QA evidence from a report run or proof of user design approval.
 
 ## Static flow patterns (0.4)
 
-`assets/flow-patterns.html` demonstrates task fan-out, independent inputs converging on a validator, labeled decision branches, and results crossing into aggregate acceptance. It is synthetic, static, and dependency-free. Copy it to an external run before previewing.
+`assets/flow-patterns.html` demonstrates task fan-out, independent inputs converging on a validator, labeled decision branches, and results crossing into aggregate acceptance. Its synthetic diagrams work without JavaScript; the shared reading navigation is an optional enhancement. Copy it to an external run before previewing.
 
 Plan essential relationships before drafting long prose, and check topology and coverage separately from layout. More figures are useful when they answer distinct questions; a fixed figure quota or a decorative chain does not establish clarity. See `references/diagrams-and-interaction.md`.
 
 ## Mechanism walkthrough (0.3)
 
-The new `assets/mechanism-walkthrough.html` combines a branching flowchart, a step-by-step sequence replay, and a parameter/policy comparison in one synthetic cancellation example. It runs offline without dependencies. Copy it to an external run directory before previewing; do not generate screenshots in the skill repository.
+`assets/mechanism-walkthrough.html` combines a branching flowchart, a step-by-step sequence replay, and a parameter/policy comparison in one synthetic cancellation example. It runs offline without dependencies. Copy it to an external run directory before previewing; do not generate screenshots in the skill repository.
 
 Read `references/diagrams-and-interaction.md` to reuse only the relevant pieces. Change the old-result arrival time around the interruption boundary, toggle the generation guard, and watch the sequence, queue, and explanations update together. The sample includes the equality case and states its concurrency assumptions.
 
@@ -87,6 +91,15 @@ Produce HTML; do not turn every paragraph into a card.
 Use explain-and-report to create a report from these evaluation results.
 Include conclusions, metric definitions, failure cases, and uncertainties.
 Produce HTML and review real browser screenshots.
+```
+
+### Engineering architecture atlas
+
+```text
+Use explain-and-report to explain this system as an engineering architecture atlas.
+Use the supplied visual references for direction. Choose useful views of component layers,
+parallel task routes, and runtime sequences; keep descriptions concise and status explicit.
+Produce a single offline HTML file.
 ```
 
 ### Publish to Feishu
@@ -131,11 +144,12 @@ Keep body figures separate from review screenshots. Authorized report publicatio
 | --- | --- | --- |
 | `report_workspace.py init/check` | Create external run directories, check paths, report repository image changes | Python 3.10+; git for Git-project checks |
 | `check_report.py` | Preflight common HTML structure, external resources, and references | Python 3.10+, standard library |
+| `apply_report_theme.py` | Embed the shared CSS in an external report, preserving body content and local layout CSS | Python 3.10+, standard library |
 | `capture_report.py` | Capture desktop/narrow-screen/diagram views, run basic browser checks, export body figures | Existing Playwright Python and Chromium |
 
-Scripts do not install dependencies automatically. Without Playwright, use available host browser tools. Without image viewing, do not claim visual review.
+Scripts do not install dependencies automatically. Follow the user's and project's browser policy before choosing a browser route. Use authorized host browser tools when script-driven capture is not permitted. If the host requires a Chrome connection, its failure is not permission to use another browser or native desktop control. Without actual rendered-image inspection, do not claim visual review.
 
-From your source working directory, run a local smoke test using the synthetic design reference:
+From your source working directory, run a local smoke test using the synthetic report:
 
 ```bash
 SKILL_DIR="$HOME/.agents/skills/explain-and-report"
@@ -144,9 +158,10 @@ INIT_JSON="$(python3 -B "$SKILL_DIR/scripts/report_workspace.py" init \
   --workspace "$PWD" --topic style-smoke)" || exit 1
 RUN="$(printf '%s' "$INIT_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["run_dir"])')" || exit 1
 cp "$SKILL_DIR/assets/reference-layout.html" "$RUN/delivery/report.html"
-python3 -B "$SKILL_DIR/scripts/check_report.py" "$RUN/delivery/report.html"
+python3 -B "$SKILL_DIR/scripts/apply_report_theme.py" --run "$RUN"
+python3 -B "$SKILL_DIR/scripts/check_report.py" "$RUN/delivery/report.html" --require-theme
 python3 -B "$SKILL_DIR/scripts/report_workspace.py" check --run "$RUN"
-# Run the next step only when browser dependencies are already installed.
+# Run only when the host permits this browser route and dependencies already exist.
 python3 -B "$SKILL_DIR/scripts/capture_report.py" --run "$RUN" --export-figures
 printf 'Run directory: %s\n' "$RUN"
 ```
@@ -156,15 +171,19 @@ To select a browser, use `--browser /absolute/path/to/chromium`. Do not automati
 
 Captures record `source_html_sha256`; recapture after HTML changes. Passing machine checks still leave `visual_review=not_reviewed`. After viewing screenshots, the agent writes `qa/review.md` separately.
 
+`--require-theme` detects a missing or modified shared CSS block. It does not validate navigation compatibility or prove that local styles preserve the identity; review overrides and actual rendering too. The apply command refreshes CSS and an existing standard `report-navigation` script together, leaving unrelated scripts unchanged. It does not install missing navigation markup or migrate arbitrary old reports. The shell includes the outline markup and inline `assets/report-navigation.js`. When maintaining either shared asset, update its inline copies in all bundled HTML assets together and run the tests.
+
 ### Tests
 
 ```bash
 python3 -B -m unittest discover -s "$SKILL_DIR/tests" -v
-# Optional Node.js check of the exact inline mechanism model (no npm dependencies):
-node --test "$SKILL_DIR/tests/test_mechanism.cjs"
+# Optional Node.js checks of the mechanism and reading navigation (no npm dependencies):
+node --test "$SKILL_DIR"/tests/*.cjs
 ```
 
-Tests use temporary directories and temporary Git repositories, leaving the user's repository index untouched. `tests/regression-prompts.md` contains separate agent regression tasks; it does not claim those actual generation tasks have been executed.
+Tests use temporary directories and temporary Git repositories, leaving the user's repository index untouched. `tests/regression-prompts.md` contains separate agent regression tasks. Only runs with recorded inputs, instructions, outputs, and review evidence can be reported as executed; script tests do not establish generation quality.
+
+For substantial skill changes, distinguish revised samples, template/script checks, and fresh generation. Use an independent reader before showing the source inputs; record misunderstandings, removable repetitions, and whether the reader is an agent or a person. Check actual desktop/narrow-screen rendering separately. See `references/visual-qa.md` for the procedure and coverage matrix.
 
 ## Package layout
 
@@ -185,21 +204,27 @@ explain-and-report/
 │   ├── flow-patterns.html
 │   ├── mechanism-walkthrough.html
 │   ├── report-shell.html
+│   ├── report-theme.css
+│   ├── report-navigation.js
 │   ├── reference-layout.html
+│   ├── reference-report.html
 │   └── publish-plan.example.json
 ├── scripts/
 │   ├── report_workspace.py
 │   ├── check_report.py
+│   ├── apply_report_theme.py
 │   └── capture_report.py
 └── tests/
     ├── test_mechanism.cjs
+    ├── test_navigation.cjs
     ├── test_workspace.py
     ├── test_html.py
+    ├── test_theme.py
     └── regression-prompts.md
 ```
 
 ## Main changes from v0.1
 
-Content-led design with optional examples; all run artifacts stored outside repositories by default; separate roles for body figures, QA screenshots, and long-term references; screenshots bound to source hashes; and optional publishing through existing Feishu skills with image allowlists, readback, and protection for human edits.
+Shared visual identity with flexible content composition; all run artifacts stored outside repositories by default; separate roles for body figures, QA screenshots, and long-term references; screenshots bound to source hashes; and optional publishing through existing Feishu skills with image allowlists, readback, and protection for human edits.
 
 This package does not implement persistent sync, a cross-platform pixel-regression service, repository-wide DLP, or a complete security sandbox. Path guards prevent mistakes; they cannot constrain another malicious process or replace access control.

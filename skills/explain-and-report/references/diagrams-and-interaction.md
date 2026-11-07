@@ -14,6 +14,18 @@ Use this guide when readers need to follow a process, understand event order, or
 
 Use a static diagram when it fully answers the question. Use a local interactive figure when stepping or changing one condition reveals something that the static view cannot show as clearly. Preserve prose for reasoning, exceptions, and limitations.
 
+## Engineering architecture atlas
+
+Let the system's structure organize the page. Three complementary views can help:
+
+- **Layers:** group components by responsibility; show what each owns and where it can be extended. Component panels express containment, not execution order.
+- **Parallel routes:** align task journeys so readers can compare shared stages, branches, gates, and return loops.
+- **Runtime sequence:** follow one concrete case across actor lanes, making handoffs, asynchronous work, and iteration boundaries visible.
+
+Use the views the question needs, styled with `assets/report-theme.css`. Keep names and visual meanings consistent across them. Let color identify roles or layers, and pair line styles with labels to distinguish relationships and implementation status. The atlas changes the information layout while retaining the report's shared identity.
+
+When borrowing from a visual reference, carry over useful information organization within the shared theme, unless a different style was requested. Ground technical claims and status labels in the task's evidence; a reference image alone does not establish the current implementation.
+
 ## Plan coverage before writing the report
 
 Build a short question-to-figure map in working notes. For each essential relationship, record the reader's question, the figure that answers it, and whether it is observed, inferred, proposed, or illustrative. This can be a few lines, not a separate planning deliverable.
@@ -25,16 +37,17 @@ For a diagnosis, start with the actual path and its failure, then show the propo
 | One task contains several work items | Parent with separate outgoing edges or explicit containment | One child after another, implying order |
 | Rules and a record are separate inputs to an evaluator | Two labeled paths converging on the evaluator | Rules → record → evaluator |
 | A decision has supported alternatives | Condition with separately labeled exits | A chain showing only success |
-| Several results feed a final assessment | Incoming result edges plus the aggregate's own criteria | Two unrelated text columns |
+| Several results feed a final assessment | Results, aggregate criteria, and evidence for aggregate-only requirements | Treating “archive required” as evidence that archiving happened |
 | Ownership or scope changes | Named boundary crossed by a labeled data edge | Color alone or a floating “scope” heading |
 | Current and proposed behavior differ | Aligned views with stable names and the changed edge/condition marked | Different layouts that obscure what changed |
 
-`assets/flow-patterns.html` is a standalone synthetic example of fan-out, converging inputs, branching, and aggregation boundaries. Copy only the relevant figures and styles into an external run. It is static by design; rich diagrams do not require animation. The existing `mechanism-walkthrough.html` covers sequence replay and state changes.
+`assets/flow-patterns.html` demonstrates fan-out, converging inputs, branching, and aggregation boundaries. `mechanism-walkthrough.html` covers sequence replay and state changes. These are component examples, not complete-report outlines; reuse only the relevant parts in an external run. For complete reading paths, use the Explain or Report reference selected in `SKILL.md`.
 
 ## Preserve topology and evidence
 
 - Every arrow is a claim. State whether it means containment, data transfer, a decision outcome, or time order. Do not imply concurrency or execution order from a task hierarchy.
-- Trace independent inputs separately to their first shared consumer. A required input may be absent; show that absence explicitly instead of drawing an edge implying it was supplied.
+- Trace independent inputs separately to their first shared consumer. Distinguish a requirement from evidence that satisfies it. Missing evidence must remain missing or unknown; individual passes cannot prove an unrelated aggregate requirement.
+- Draw atomic operations around the state read, comparison, and effect they protect. Put the concurrency assumption beside the main figure; an external stale snapshot must not appear equivalent to reading current state within that operation. Do not invent a lock or other implementation.
 - Keep different levels distinct: a task, its execution record, and an evaluator are not interchangeable steps. Use lanes or groups when their ownership matters.
 - Mark the failure at the responsible edge or condition. Distinguish a persisted outcome/reason from an inferred cause and a proposed correction. Do not turn a model's saved explanation into a fictional internal execution trace.
 - Show both exits of a documented rule. If evidence shows only one outcome and the rule itself is unknown, draw the observed path and label the unknown; do not invent an alternative to fill a diamond.
@@ -49,13 +62,13 @@ Start from one concrete case, not a collection of component names. Write its inp
 - Give each diagram one question and one takeaway. Split an oversized graph into an overview and focused details.
 - Label arrows with actions/data; label decision exits with the actual condition or yes/no meaning. Distinguish rejected, cleared, pending, and accepted states with words.
 - Keep the same actors and names across the overview, replay, and comparison. Do not mix components, business phases, and implementation details at one unexplained level.
-- Draw SVG edges before nodes; use actual SVG lines/paths and arrow markers. Reserve room for labels. Reflow small diagrams or scroll irreducibly wide sequence diagrams locally; do not shrink labels beyond readability.
+- Draw SVG edges before nodes; use actual SVG lines/paths and arrow markers. Reserve room for labels. Reflow simple input, decision, and containment diagrams into a readable narrow-screen structure. Use local scrolling for irreducibly wide sequences; do not shrink labels beyond readability. A chart's threshold/reference line must remain visible over its marks.
 - Show real timestamps only when supported. Event rows do not imply equal durations. Label synthetic timing and equality/tie-breaking assumptions explicitly.
 - Draw the relevant exception path, not only the success path. If an exception is unknown, label the gap rather than inventing a branch.
 
 ## Three reusable patterns
 
-`assets/mechanism-walkthrough.html` is a runnable, dependency-free synthetic example with all three patterns. Copy it into an external run directory before previewing or adapting it. Reuse the relevant figure, CSS, and script parts; do not impose its entire outline or cancellation topic on every report.
+`assets/mechanism-walkthrough.html` is a runnable, dependency-free synthetic example with all three patterns and the shared theme. Copy it into an external run directory before previewing or adapting it. Reuse the relevant geometry, layout, and script. Its outline and cancellation topic are illustrative.
 
 ### 1. Branching flow
 
@@ -83,7 +96,7 @@ One pure `simulate(settings)` returns event snapshots. The selected snapshot dri
 
 Keep this version small: inline SVG, semantic HTML, a pure model, and a local controller. Use ordinary labeled buttons and ranges, readable text, textual status, and pause/reset. No dependency, reusable component framework, formal accessibility audit, autoplay, or ornamental animation is needed.
 
-Keep a complete static explanation and default case outside optional `data-interactive` regions. Initially hide controls, render successfully, then reveal them. No-JS and print readers must still understand the conclusion and mechanism. Do not hide the entire article in a dynamic mount.
+Keep a complete static explanation and default case outside optional `data-interactive` regions. Label that fixed case separately from the currently selected settings; replay, state, and comparison should add different information rather than retell it. Initially hide controls, render successfully, then reveal them. No-JS and print readers must still understand the conclusion and mechanism. Do not hide the entire article in a dynamic mount.
 
 Never put untrusted source text into executable JavaScript or HTML strings. Use safe serialization for embedded data and `textContent` for labels. The demo uses only authored synthetic values.
 

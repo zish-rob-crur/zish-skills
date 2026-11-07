@@ -9,6 +9,8 @@ If the user explicitly requests a report index in the repository, write only aut
 
 ## Default paths
 
+Run `python3 -B <skill-dir>/scripts/report_workspace.py init --workspace "$PWD" --topic system-review` before generating artifacts. Use a short English topic without customer information and take the returned JSON `run_dir` as the destination; do not substitute `./reports/`. All subsequent writes, including third-party publishing intermediates and debug output, belong in that run. If the default location is unavailable, use an already authorized writable location outside repositories; otherwise deliver feasible content in chat and state the limitation.
+
 ```text
 ${EXPLAIN_REPORT_HOME:-${XDG_STATE_HOME:-$HOME/.local/state}/explain-and-report}/
 ├── runs/
