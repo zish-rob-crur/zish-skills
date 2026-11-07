@@ -1,0 +1,13 @@
+interface:
+  display_name: Think with Me · 思考协作
+  short_description: 结合项目事实陪你思考，检验关键假设，并记录你的选择、理由、代价与变化
+  default_prompt: 用 $think-with-me 围绕我的大纲结合项目做调研，保留我提出方案和发散的空间；在我形成倾向后检验关键假设，必要时按我重视的标准比较。写一份简洁的思考文档，持续记录我的选择、理由、接受的代价与重新考虑条件。
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
