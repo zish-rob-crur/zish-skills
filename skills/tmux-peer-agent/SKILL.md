@@ -1,13 +1,15 @@
 ---
 name: tmux-peer-agent
-description: Hand a design review or a coding task to the other agent (Codex or Claude Code) in a visible tmux pane and get its result back. Use when the user asks for a cross-agent, adversarial, or second-opinion review, or wants the other agent to do a piece of work.
+description: Delegate a review or task to Codex, Claude Code, or Antigravity CLI in a visible tmux pane.
 ---
 
 # Tmux Peer Agent
 
 ## Overview
 
-You are the requester. `scripts/peer_agent.py` sends a brief to the other agent in a tmux pane next to yours and hands back its result file. When Codex runs this skill, Claude Code is the peer; when Claude Code runs it, Codex is. The pane stays interactive, so the user can watch and step in at any time.
+You are the requester. `scripts/peer_agent.py` sends a brief to the other agent in a tmux pane next to yours and hands back its result file. By default, Codex calls Claude Code; Claude Code and Antigravity CLI call Codex. Pass `--agent agy` to select Antigravity CLI explicitly. The pane stays interactive, so the user can watch and step in at any time.
+
+In this user's workflow, AGY means the Gemini-powered Antigravity CLI, usually already running in a tmux pane. When the user asks for a Gemini peer, use `agy`. If they specify a pane, reuse that session and its current model; do not restart it or switch models. Do not assume a specific Gemini version.
 
 Two modes:
 
@@ -21,12 +23,12 @@ Replace `<skill-dir>` below with the absolute path of the directory that contain
 ## Requirements
 
 - Run inside tmux, or pass `--target` or `--pane`.
-- The peer starts by typing `codex` or `claude` into an interactive shell, so the user's aliases apply. Override with `PEER_AGENT_CODEX_CMD` or `PEER_AGENT_CLAUDE_CMD`.
+- The peer starts by typing `codex`, `claude`, or `agy` into an interactive shell, so the user's aliases apply. Override with `PEER_AGENT_CODEX_CMD`, `PEER_AGENT_CLAUDE_CMD`, or `PEER_AGENT_AGY_CMD`. Antigravity requires the interactive `agy` CLI, not an editor launcher; do not set the override to print/noninteractive mode.
 - The peer writes to `.peer-agent/<session>/` in the repo root. If its permission mode asks first, the user approves in the pane. The script adds `/.peer-agent/` to `.git/info/exclude`.
 
 ## Send And Wait
 
-1. Pick a short session slug. Omit `--agent` unless the user names one. Pass `--pane` only when the user points at a pane, such as "use the pane on the right" (`{right-of}`) or "pane 3" (`.3`); then the peer is whatever agent runs there. Otherwise the script detects the caller and picks the other agent.
+1. Pick a short session slug. Omit `--agent` unless the user names one. Pass `--pane` only when the user points at a pane, such as "use the pane on the right" (`{right-of}`) or "pane 3" (`.3`); then the peer is whatever agent runs there. Otherwise the script detects the caller and uses the default mapping above.
 2. Write the brief from the matching template below. Point to files, docs, and commands such as `git diff main...HEAD` instead of pasting them; the peer shares the worktree.
 3. Send the brief through stdin so no stray brief files land in the repo:
 
@@ -155,7 +157,7 @@ Round 2 and later:
 
 `send`
 - `--mode review|task` picks the protocol appended to the brief; a session stays in the mode it started with. Do not restate the protocol in the brief.
-- `--agent codex|claude` overrides the peer.
+- `--agent codex|claude|agy` overrides the peer.
 - `--pane <target>` accepts any tmux pane target (`%12`, `.3`, `{right-of}`, `{down-of}`), uses that pane, and marks it. If it runs a shell, the agent is launched there. It cannot be the requester's own pane.
 - `--new-pane` skips reusing a marked peer pane. Unmark a pane with `tmux set-option -pu -t <target> @peer-agent`.
 - `--direction auto|right|below` sets how a new split cuts the largest pane.

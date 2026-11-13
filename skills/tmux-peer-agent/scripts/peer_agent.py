@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Drive a Codex or Claude Code peer in a tmux pane: review a design, or hand it a task."""
+"""Drive a Codex, Claude Code, or Antigravity CLI peer in a tmux pane: review a design, or hand it a task."""
 from __future__ import annotations
 
 import argparse
@@ -17,9 +17,10 @@ from typing import Callable, NoReturn
 WORK_DIR = ".peer-agent"
 PANE_MARK = "@peer-agent"  # tmux pane option naming the peer agent; only marked panes are reused
 SHELLS = {"zsh", "bash", "fish", "sh", "dash", "-zsh", "-bash", "login"}
-LAUNCH_ENV = {"codex": "PEER_AGENT_CODEX_CMD", "claude": "PEER_AGENT_CLAUDE_CMD"}
+LAUNCH_ENV = {"codex": "PEER_AGENT_CODEX_CMD", "claude": "PEER_AGENT_CLAUDE_CMD", "agy": "PEER_AGENT_AGY_CMD"}
+# Antigravity CLI: "esc to cancel" while generating.
 # Codex: "Working (9s • esc to interrupt)". Claude Code: "· Effecting… (13s · ↓ 267 tokens · ...)".
-BUSY = re.compile(r"esc to interrupt|…\s*\((?:\d+[hms]\s*)+·", re.IGNORECASE)
+BUSY = re.compile(r"esc to (?:interrupt|cancel)|…\s*\((?:\d+[hms]\s*)+·", re.IGNORECASE)
 STARTUP_TIMEOUT = 90
 POLL_INTERVAL = 3
 TRUST_PROMPT = re.compile(r"\btrust\b", re.IGNORECASE)
@@ -253,7 +254,7 @@ def submit(pane: str, text: str, out: Path) -> None:
     tmux("load-buffer", "-b", buffer, "-", stdin=text)
     tmux("paste-buffer", "-p", "-d", "-b", buffer, "-t", pane)
     for _ in range(2):
-        # An Enter that arrives with the end of a bracketed paste is swallowed by both TUIs.
+        # An Enter that arrives with the end of a bracketed paste is swallowed by interactive TUIs.
         time.sleep(1)
         tmux("send-keys", "-t", pane, "Enter")
         if wait_for(lambda: out.exists() or bool(BUSY.search(capture(pane))), 6):
@@ -265,6 +266,8 @@ def command_agent(command: str) -> str | None:
     words = command.split()
     for word in words[:2]:  # the binary itself, or a script run by node
         name = Path(word).name
+        if name == "agy":
+            return "agy"
         if name == "codex" or name.startswith("codex-"):
             return "codex"
         if name == "claude" or "/claude/versions/" in word:
@@ -273,7 +276,7 @@ def command_agent(command: str) -> str | None:
 
 
 def caller_agent() -> str | None:
-    """Find the nearest Codex or Claude Code process that ran this script."""
+    """Find the nearest supported agent process that ran this script."""
     result = subprocess.run(["ps", "-axo", "pid=,ppid=,command="], text=True, capture_output=True)
     processes = {}
     for line in result.stdout.splitlines():
@@ -291,6 +294,8 @@ def caller_agent() -> str | None:
 
 
 def pane_agent(command: str) -> str | None:
+    if command == "agy":
+        return "agy"
     # Claude Code shows up in tmux as its version number, e.g. "2.1.272".
     if command == "claude" or re.fullmatch(r"\d+\.\d+\.\d+", command):
         return "claude"
@@ -375,7 +380,7 @@ def cmd_send(args: argparse.Namespace) -> int:
     if not agent:
         caller = caller_agent()
         if not caller:
-            fail("cannot tell whether Codex or Claude Code is calling; pass --agent")
+            fail("cannot identify the calling agent; pass --agent codex, claude, or agy")
         agent = "claude" if caller == "codex" else "codex"
     if state and agent != state["agent"]:
         fail(f"session {session} already uses {state['agent']}")
@@ -466,9 +471,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
-    send = sub.add_parser("send", help="Send a review brief or a task brief to a Codex/Claude pane.")
+    send = sub.add_parser("send", help="Send a review brief or a task brief to a Codex/Claude/Antigravity CLI pane.")
     send.add_argument("--mode", choices=sorted(PROTOCOLS), help="review (default): the peer critiques and edits nothing. task: the peer does the work.")
-    send.add_argument("--agent", choices=sorted(LAUNCH_ENV), help="Peer agent. Defaults to the other agent than the caller.")
+    send.add_argument("--agent", choices=sorted(LAUNCH_ENV), help="Peer agent. Codex calls Claude; Claude and agy call Codex by default.")
     send.add_argument("--session", help="Session slug; reuse it for later rounds. Defaults to a timestamp.")
     send.add_argument("--message-file", required=True, help="Markdown review brief, or - for stdin.")
     send.add_argument("--pane", help='Peer pane as any tmux target ("%%12", ".3", "{right-of}"); marked for later reuse.')

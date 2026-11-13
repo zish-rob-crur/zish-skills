@@ -9,8 +9,7 @@ A collection of reusable skills I use with coding agents and AI workflows.
 | `analyze-open-source-repo` | Analyze open source repositories and save structured Obsidian study notes. |
 | `explain-and-report` | Explain complex systems with diagrams, interactive walkthroughs, and HTML reports, with optional Feishu publishing. |
 | `handoff` | Create concise Markdown handoffs for Coding Agent work, blockers, reviews, escalations, or context transfers, with an optional zip bundle of the referenced code. |
-| `tmux-nvim-review` | Open files changed by Codex in a new tmux pane with nvim for review. |
-| `tmux-peer-agent` | Hand a design review or a coding task to Codex or Claude Code in a visible tmux pane and get the result back. |
+| `tmux-peer-agent` | Hand a design review or a coding task to Codex, Claude Code, or Antigravity CLI in a visible tmux pane and get the result back. |
 | `zish-skill-manager` | Manage personal, public, private, company, and customer-specific Codex skills without leaking private material into this public repo. |
 
 ## Install From Remote With `npx skills`
@@ -36,7 +35,6 @@ npx skills add https://github.com/zish-rob-crur/zish-skills --skill analyze-open
 npx skills add https://github.com/zish-rob-crur/zish-skills --skill explain-and-report --agent codex --global
 npx skills add https://github.com/zish-rob-crur/zish-skills --skill handoff --agent codex --global
 npx skills add https://github.com/zish-rob-crur/zish-skills --skill tmux-peer-agent --agent codex --global
-npx skills add https://github.com/zish-rob-crur/zish-skills --skill tmux-nvim-review --agent codex --global
 npx skills add https://github.com/zish-rob-crur/zish-skills --skill zish-skill-manager --agent codex --global
 ```
 
@@ -55,5 +53,5 @@ npx skills add zish-rob-crur/zish-skills --skill handoff --agent codex --global
 Update installed skills later:
 
 ```bash
-npx skills update analyze-open-source-repo explain-and-report handoff tmux-nvim-review tmux-peer-agent zish-skill-manager --global
+npx skills update analyze-open-source-repo explain-and-report handoff tmux-peer-agent zish-skill-manager --global
 ```
