@@ -9,6 +9,8 @@ A collection of reusable skills I use with coding agents and AI workflows.
 | `analyze-open-source-repo` | Analyze open source repositories and save structured Obsidian study notes. |
 | `explain-and-report` | Explain complex systems with diagrams, interactive walkthroughs, and HTML reports, with optional Feishu publishing. |
 | `handoff` | Create concise Markdown handoffs for Coding Agent work, blockers, reviews, escalations, or context transfers, with an optional zip bundle of the referenced code. |
+| `review-with-judgment` | Review multi-commit MRs/PRs, code changes, ADRs, and agent architectures for correctness, reuse, over-engineering, and long-term maintainability. |
+| `think-with-me` | Help users reason through project and ADR decisions using repo evidence, their priorities, and explicit tradeoffs. |
 | `tmux-peer-agent` | Hand a design review or a coding task to Codex, Claude Code, or Antigravity CLI in a visible tmux pane and get the result back. |
 | `zish-skill-manager` | Manage personal, public, private, company, and customer-specific Codex skills without leaking private material into this public repo. |
 
@@ -34,6 +36,8 @@ Install a single skill for Codex globally:
 npx skills add https://github.com/zish-rob-crur/zish-skills --skill analyze-open-source-repo --agent codex --global
 npx skills add https://github.com/zish-rob-crur/zish-skills --skill explain-and-report --agent codex --global
 npx skills add https://github.com/zish-rob-crur/zish-skills --skill handoff --agent codex --global
+npx skills add https://github.com/zish-rob-crur/zish-skills --skill review-with-judgment --agent codex --global
+npx skills add https://github.com/zish-rob-crur/zish-skills --skill think-with-me --agent codex --global
 npx skills add https://github.com/zish-rob-crur/zish-skills --skill tmux-peer-agent --agent codex --global
 npx skills add https://github.com/zish-rob-crur/zish-skills --skill zish-skill-manager --agent codex --global
 ```
@@ -53,5 +57,5 @@ npx skills add zish-rob-crur/zish-skills --skill handoff --agent codex --global
 Update installed skills later:
 
 ```bash
-npx skills update analyze-open-source-repo explain-and-report handoff tmux-peer-agent zish-skill-manager --global
+npx skills update analyze-open-source-repo explain-and-report handoff review-with-judgment think-with-me tmux-peer-agent zish-skill-manager --global
 ```

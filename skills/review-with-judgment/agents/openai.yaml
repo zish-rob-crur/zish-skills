@@ -1,0 +1,13 @@
+interface:
+  display_name: Review with Judgment
+  short_description: Review MRs, code, ADRs, and agent designs for simplicity, reuse, and maintainability
+  default_prompt: Use $review-with-judgment to review this MR, code change, or design against repo evidence, check reuse and maintainability, flag over-engineering or boundary bugs, and propose the smallest defensible fixes.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
