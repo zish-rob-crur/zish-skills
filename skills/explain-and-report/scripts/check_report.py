@@ -11,6 +11,8 @@ from apply_report_theme import THEME_PATH, check_theme
 
 
 class ReportParser(HTMLParser):
+    BANNED_META_PHRASES = ('悬浮目录', '一句话怎么讲', '鼠标悬停即可', '鼠标悬浮即可', '点击切换查看', '交互切换查看')
+
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.tags: list[tuple[str, dict[str, str]]] = []
@@ -18,6 +20,15 @@ class ReportParser(HTMLParser):
         self.errors: list[str] = []
         self.titles: list[str] = []
         self.in_title = False
+        self.in_details = 0
+        self.in_dl = 0
+        self.in_svg = 0
+        self.in_script_or_style = 0
+        self.svg_text_buf: list[str] | None = None
+        self.long_svg_labels = 0
+        self.visible_text_parts: list[str] = []
+        self.block_code_counts: list[tuple[str, int]] = []
+        self.high_code_blocks = 0
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         d = {key: value or '' for key, value in attrs}
@@ -26,6 +37,21 @@ class ReportParser(HTMLParser):
             self.ids.append(d['id'])
         if tag == 'title':
             self.in_title = True
+        if tag in {'script', 'style'}:
+            self.in_script_or_style += 1
+        if tag == 'svg':
+            self.in_svg += 1
+        if tag == 'text' and self.in_svg > 0:
+            self.svg_text_buf = []
+        if tag == 'details':
+            self.in_details += 1
+        if tag == 'dl':
+            self.in_dl += 1
+        if tag in {'p', 'td'} and not self.in_details and not self.in_dl:
+            self.block_code_counts.append((tag, 0))
+        if tag == 'code' and self.block_code_counts and not self.in_details and not self.in_dl:
+            btag, count = self.block_code_counts[-1]
+            self.block_code_counts[-1] = (btag, count + 1)
         if tag in {'iframe', 'object', 'embed', 'base'}:
             self.errors.append(f'Unsupported embedded/redirecting resource: <{tag}>')
         for attr in ('src', 'poster', 'srcset'):
@@ -51,14 +77,36 @@ class ReportParser(HTMLParser):
 
     def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         self.handle_starttag(tag, attrs)
+        self.handle_endtag(tag)
 
     def handle_endtag(self, tag: str) -> None:
         if tag == 'title':
             self.in_title = False
+        if tag in {'script', 'style'} and self.in_script_or_style > 0:
+            self.in_script_or_style -= 1
+        if tag == 'text' and self.svg_text_buf is not None:
+            label = re.sub(r'\s+', ' ', ''.join(self.svg_text_buf)).strip()
+            if len(label) > 36:
+                self.long_svg_labels += 1
+            self.svg_text_buf = None
+        if tag == 'svg' and self.in_svg > 0:
+            self.in_svg -= 1
+        if tag == 'details' and self.in_details > 0:
+            self.in_details -= 1
+        if tag == 'dl' and self.in_dl > 0:
+            self.in_dl -= 1
+        if tag in {'p', 'td'} and self.block_code_counts and self.block_code_counts[-1][0] == tag:
+            _, count = self.block_code_counts.pop()
+            if count >= 6:
+                self.high_code_blocks += 1
 
     def handle_data(self, data: str) -> None:
         if self.in_title:
             self.titles.append(data)
+        if self.svg_text_buf is not None:
+            self.svg_text_buf.append(data)
+        if not self.in_script_or_style:
+            self.visible_text_parts.append(data)
 
 
 def check_html(text: str) -> tuple[list[str], list[str]]:
@@ -104,6 +152,22 @@ def check_html(text: str) -> tuple[list[str], list[str]]:
         warnings.append('No print stylesheet detected')
     if tags.count('figure') > tags.count('figcaption'):
         warnings.append('Some figures may lack captions')
+    if parser.high_code_blocks:
+        warnings.append(
+            f'{parser.high_code_blocks} prose/table block(s) contain >=6 inline <code> tags; '
+            'prefer human domain terms in main prose/tables and move file paths, signatures, or schema fields to <details>, .sidenote, or appendix'
+        )
+    if parser.long_svg_labels:
+        warnings.append(
+            f'{parser.long_svg_labels} SVG <text> label(s) exceed 36 characters; '
+            'move legends and multi-clause explanations to external HTML (.chart-legend / .milestone-strip) to avoid collisions'
+        )
+    visible_text = ''.join(parser.visible_text_parts)
+    found_meta = [phrase for phrase in ReportParser.BANNED_META_PHRASES if phrase in visible_text]
+    if found_meta:
+        warnings.append(
+            f'UI tutorial or meta-commentary phrase detected in visible report text ({", ".join(found_meta)}); describe the subject only'
+        )
     if len(text.encode('utf-8')) > 2_000_000:
         warnings.append('File exceeds 2 MB; check whether raw logs or assets can be reduced')
     return list(dict.fromkeys(errors)), list(dict.fromkeys(warnings))

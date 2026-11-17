@@ -12,41 +12,70 @@
 :root {
   color-scheme: dark;
   --bg: #0f1418; --paper: #192128; --raised: #202a33;
-  --ink: #e8edf3; --muted: #a7b4c1; --line: #455563;
+  --ink: #e8edf3; --muted: #a7b4c1; --line: #384654;
   --accent: #f5946f; --accent-soft: #33251f;
   --success: #79d9bd; --success-soft: #19322d;
   --warn: #edc16e; --warn-bg: #30291b;
   --info: #a2b2ff; --info-soft: #252c45;
   --error: #ffaaa4; --error-soft: #392424;
-  --font: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+  --shadow: 0 8px 28px rgb(0 0 0 / .32); --shadow-pop: 0 12px 32px rgb(0 0 0 / .42);
+  --font: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
   --mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  --body: 46rem; --wide: 90rem; --radius: 8px;
+  --body: 52rem; --page-max: 1620px; --content-max: 100%; --wide: min(var(--page-max), 96vw); --radius: 8px;
+}
+html[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f6f5f0; --paper: #ffffff; --raised: #eeece4;
+  --ink: #18222c; --muted: #52606d; --line: #d4d8dd;
+  --accent: #c4471c; --accent-soft: #fbeae3;
+  --success: #146c54; --success-soft: #e3f5ef;
+  --warn: #8a5a00; --warn-bg: #fef5dc;
+  --info: #2b4c9b; --info-soft: #e8eefc;
+  --error: #a82520; --error-soft: #fde8e7;
+  --shadow: 0 8px 24px rgb(15 20 24 / .12); --shadow-pop: 0 12px 32px rgb(15 20 24 / .18);
 }
 * { box-sizing: border-box; }
 html { scroll-padding-top: var(--reading-offset, 24px); }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.8 var(--font); }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.8 var(--font); -webkit-font-smoothing: antialiased; }
 a { color: var(--accent); text-underline-offset: .22em; overflow-wrap: anywhere; }
 a:hover { text-decoration-thickness: 2px; }
+a.cite-ref, :is(main p, main li, main td, .sidenote, .caveat-box, figcaption) a[href^="#C"] {
+  display: inline-block; font: 600 11px/1.35 var(--mono); color: var(--muted);
+  background: var(--raised); border: 1px solid var(--line); border-radius: 4px;
+  padding: 1px 5px; margin: 0 1px; text-decoration: none; transform: translateY(-1px);
+  vertical-align: baseline; transition: color .12s, border-color .12s, background .12s;
+}
+a.cite-ref:hover, a.cite-ref:focus-visible,
+:is(main p, main li, main td, .sidenote, .caveat-box, figcaption) a[href^="#C"]:hover,
+:is(main p, main li, main td, .sidenote, .caveat-box, figcaption) a[href^="#C"]:focus-visible {
+  color: var(--accent); background: var(--accent-soft); border-color: var(--accent); text-decoration: none;
+}
 :focus-visible { outline: 3px solid var(--info); outline-offset: 4px; }
 ::selection { background: var(--info-soft); color: var(--ink); }
-.skip { position: absolute; top: -80px; left: 20px; padding: 10px; background: var(--paper); z-index: 10; }
+strong, b { color: var(--ink); font-weight: 680; }
+mark, .hl { background: var(--accent-soft); color: var(--accent); padding: 1px 6px; border-radius: 4px; font-weight: 600; }
+.skip { position: absolute; top: -80px; left: 20px; padding: 10px; background: var(--paper); z-index: 50; }
 .skip:focus { top: 12px; }
-.report { max-width: var(--wide); margin: auto; padding: 28px 40px 40px; }
-.masthead { display: flex; justify-content: space-between; align-items: center; gap: 24px; border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+.report, .report.reading-report { max-width: var(--wide); margin: auto; padding: 28px 44px 56px; }
+.report.navigation-ready { padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
+.masthead { display: flex; justify-content: space-between; align-items: center; gap: 24px; border-bottom: 1px solid var(--line); padding-bottom: 14px; }
 .brand, .eyebrow, .section-number { color: var(--accent); font: 12px/1.6 var(--mono); letter-spacing: .08em; }
 .brand { margin: 0; }
+.theme-toggle { padding: 4px 10px; font: 12px/1.5 var(--mono); color: var(--muted); background: var(--paper); border: 1px solid var(--line); border-radius: 999px; }
+.theme-toggle:hover { color: var(--ink); border-color: var(--accent); }
 nav { display: flex; flex-wrap: wrap; gap: 10px 22px; }
 nav a { color: var(--muted); font-size: 13px; text-decoration: none; }
 nav a:hover { color: var(--accent); }
-.reading-layout > main { min-width: 0; }
+.reading-layout { display: block; }
+.reading-layout > main { min-width: 0; width: 100%; max-width: var(--content-max); }
 .reading-rail { position: relative; margin-top: 20px; padding: 12px 0; border-bottom: 1px solid var(--line); background: var(--bg); }
-.navigation-ready .reading-rail { z-index: 5; }
 details.report-outline { border: 0; padding: 0; }
 .report-outline > summary { min-height: 36px; padding-right: 145px; color: var(--muted); font-size: 13px; }
 .report-outline[open] > summary { margin-bottom: 10px; }
 .report-outline nav { display: flex; flex-direction: column; gap: 4px; max-height: 55vh; overflow-y: auto; overscroll-behavior: contain; padding: 4px; }
-.report-outline nav a { display: block; padding: 7px 10px; border-left: 2px solid transparent; line-height: 1.6; }
-.report-outline nav a[aria-current="location"] { color: var(--accent); background: var(--accent-soft); border-left-color: var(--accent); font-weight: 650; }
+.report-outline nav a { display: block; padding: 7px 10px; border-left: 2px solid transparent; border-radius: 0 4px 4px 0; line-height: 1.5; }
+.report-outline nav a.nav-sub { padding-left: 20px; font-size: 12px; opacity: .85; }
+.report-outline nav a[aria-current="location"] { color: var(--accent); background: var(--accent-soft); border-left-color: var(--accent); font-weight: 650; opacity: 1; }
 .reading-progress { position: absolute; top: 12px; right: 0; width: 8rem; color: var(--muted); font-size: 12px; line-height: 1.6; }
 .reading-progress-label { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
 .reading-progress output { font-family: var(--mono); font-variant-numeric: tabular-nums; }
@@ -54,64 +83,78 @@ details.report-outline { border: 0; padding: 0; }
 .reading-progress progress::-webkit-progress-bar { background: var(--line); }
 .reading-progress progress::-webkit-progress-value { background: var(--accent); }
 .reading-progress progress::-moz-progress-bar { background: var(--accent); }
-@media (width < 1440px) {
-  .report.navigation-ready { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
-  .navigation-ready .reading-rail {
-    position: fixed; right: calc(16px + env(safe-area-inset-right, 0px));
-    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-    width: 10rem; max-width: calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
-    margin: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--radius);
-    background: var(--paper); box-shadow: 0 6px 24px rgb(0 0 0 / .22);
-  }
-  .navigation-ready .report-outline > summary {
-    min-height: 48px; margin: 0; padding: 10px 66px 14px 14px;
-    color: var(--ink); font-size: 14px; line-height: 1.7;
-  }
-  .navigation-ready .report-outline nav {
-    position: absolute; right: 0; bottom: calc(100% + 8px);
-    width: min(22rem, calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
-    max-height: min(28rem, calc(100vh - 96px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px)));
-    max-height: min(28rem, calc(100dvh - 96px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px)));
-    padding: 8px; border: 1px solid var(--line); border-radius: var(--radius);
-    background: var(--paper); box-shadow: 0 6px 24px rgb(0 0 0 / .22);
-  }
-  .navigation-ready .reading-progress { inset: 0; width: auto; pointer-events: none; }
-  .navigation-ready .reading-progress-label { position: absolute; top: 12px; right: 14px; margin: 0; font-size: 13px; }
-  .navigation-ready .reading-progress-label > span { display: none; }
-  .navigation-ready .reading-progress progress { position: absolute; left: 8px; bottom: 6px; width: calc(100% - 16px); height: 2px; }
+.navigation-ready .reading-rail {
+  position: fixed;
+  left: calc(24px + env(safe-area-inset-left, 0px));
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  top: auto; right: auto; z-index: 42;
+  width: 9.5rem;
+  max-width: calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+  margin: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--paper); box-shadow: var(--shadow);
 }
-@media (min-width: 1440px) {
-  .report.reading-report { max-width: 108rem; padding-left: 28px; padding-right: 28px; }
-  .reading-layout { display: grid; grid-template-columns: 176px minmax(0, 1fr); gap: 28px; }
-  .reading-rail { align-self: start; margin-top: 36px; padding: 0; border: 0; }
-  .navigation-ready .reading-rail { position: sticky; top: 24px; }
-  .report-outline > summary { min-height: 0; padding-right: 0; }
-  .report-outline nav { max-height: calc(100vh - 190px); }
-  .reading-progress { position: static; width: auto; margin-top: 22px; }
+.navigation-ready .reading-rail[data-toc-pinned="true"] { border-color: var(--accent); }
+.navigation-ready details.report-outline { border: 0; padding: 0; margin: 0; background: transparent; box-shadow: none; }
+.navigation-ready .report-outline > summary {
+  min-height: 44px; margin: 0; padding: 10px 58px 12px 14px;
+  color: var(--ink); font: 600 13px/1.6 var(--mono); cursor: pointer; list-style: none;
 }
-.hero { padding: 36px 0 28px; }
-.eyebrow { margin: 0 0 12px; }
-h1, h2, h3, h4 { line-height: 1.4; margin: 0; font-weight: 650; text-wrap: balance; }
-h1 { font-size: clamp(32px, 3.6vw, 46px); letter-spacing: -.025em; max-width: 24em; }
-h2 { font-size: 25px; margin: 0 0 18px; }
-h3 { font-size: 19px; margin: 0 0 10px; }
-h4 { font-size: 16px; margin: 0 0 8px; }
+.navigation-ready .report-outline > summary::-webkit-details-marker { display: none; }
+.navigation-ready .report-outline[open] > summary { margin: 0; color: var(--accent); }
+.navigation-ready .report-outline nav {
+  position: absolute; left: 0; bottom: calc(100% + 8px);
+  width: min(19rem, calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+  max-height: min(28rem, calc(100vh - 108px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px)));
+  max-height: min(28rem, calc(100dvh - 108px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px)));
+  padding: 8px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--paper); box-shadow: var(--shadow-pop);
+}
+.navigation-ready .report-outline nav::before { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 10px; }
+.navigation-ready .reading-progress { inset: 0; width: auto; margin: 0; pointer-events: none; position: absolute; }
+.navigation-ready .reading-progress-label { position: absolute; top: 11px; right: 14px; margin: 0; font-size: 12.5px; }
+.navigation-ready .reading-progress-label > span { display: none; }
+.navigation-ready .reading-progress progress { position: absolute; left: 8px; bottom: 5px; width: calc(100% - 16px); height: 2px; }
+.hero { padding: 34px 0 26px; }
+.eyebrow { margin: 0 0 10px; }
+h1, h2, h3, h4 { line-height: 1.38; margin: 0; font-weight: 650; text-wrap: balance; }
+h1 { font-size: clamp(30px, 3.4vw, 42px); letter-spacing: -.02em; max-width: 28em; }
+h2 { font-size: 24px; margin: 0 0 16px; }
+h3 { font-size: 18px; margin: 0 0 8px; }
+h4 { font-size: 15px; margin: 0 0 6px; }
 p { margin: 0 0 16px; }
-.lead { font-size: 19px; max-width: var(--body); margin: 20px 0 12px; }
-.meta, .note, figcaption { font-size: 13px; line-height: 1.75; color: var(--muted); }
+.lead { font-size: 19px; line-height: 1.7; max-width: 60rem; margin: 18px 0 14px; color: var(--ink); }
+.meta, .note, figcaption { font-size: 13px; line-height: 1.7; color: var(--muted); }
 .prose { max-width: var(--body); }
 .wide { max-width: none; }
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 14px; margin: 22px 0 12px; }
+.summary-card { background: var(--paper); border: 1px solid var(--line); border-top: 3px solid var(--accent); border-radius: var(--radius); padding: 14px 16px; }
+.summary-card.card-evidence { border-top-color: var(--success); }
+.summary-card.card-boundary { border-top-color: var(--warn); }
+.summary-card.card-retell { border-top-color: var(--info); background: var(--raised); }
+.summary-label { display: block; font: 11px/1.5 var(--mono); color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px; }
+.summary-value { display: block; font-size: 16px; font-weight: 680; line-height: 1.45; margin-bottom: 6px; color: var(--ink); }
+.summary-card p { font-size: 13.5px; line-height: 1.6; color: var(--muted); margin: 0; }
+.with-sidenote { display: grid; grid-template-columns: minmax(0, 1fr) minmax(16rem, 300px); gap: 32px; align-items: start; margin: 16px 0; }
+.with-sidenote > * { min-width: 0; }
+.with-sidenote > .prose { max-width: 60rem; }
+.sidenote, .caveat-box { font-size: 13px; line-height: 1.65; color: var(--muted); background: var(--paper); border: 1px solid var(--line); border-left: 3px solid var(--muted); border-radius: var(--radius); padding: 12px 14px; }
+.sidenote strong, .caveat-box strong { color: var(--ink); font-size: 12px; font-family: var(--mono); display: block; margin-bottom: 4px; }
+.caveat-box { max-width: 60rem; margin: 14px 0; }
+.mental-model { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 18px 0; }
+.mental-model > * { min-width: 0; padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--paper); }
+.mental-model .model-bad { border-left: 3px solid var(--error); background: var(--error-soft); }
+.mental-model .model-good { border-left: 3px solid var(--success); background: var(--success-soft); }
 .report-section { border-top: 1px solid var(--line); padding: 28px 0; }
-.section-heading { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; }
+.section-heading { display: flex; align-items: baseline; gap: 14px; margin-bottom: 16px; }
 .section-heading h2 { margin: 0; }
-.verdict, .caution { padding: 16px 20px; border-left: 3px solid var(--accent); background: var(--accent-soft); margin: 20px 0; }
+.verdict, .caution { padding: 16px 20px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 var(--radius) var(--radius) 0; margin: 20px 0; }
 .verdict p:last-child, .caution p:last-child { margin-bottom: 0; }
 .caution { color: var(--warn); background: var(--warn-bg); border-color: var(--warn); }
-.compare, .routes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.compare, .routes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 .compare > *, .routes > * { min-width: 0; }
-.component-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 12px; }
+.component-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 14px; margin: 16px 0; }
 .component, .step { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
-.component p, .step p { color: var(--muted); font-size: 14px; }
+.component p, .step p { color: var(--muted); font-size: 14px; line-height: 1.65; }
 .component p:last-child, .step p:last-child { margin-bottom: 0; }
 .layer { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 16px; padding: 16px; border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius); margin: 14px 0; }
 .layer-label { align-self: center; color: var(--accent); }
@@ -124,6 +167,69 @@ p { margin: 0 0 16px; }
 .status-warning { color: var(--warn); }
 .status-error { color: var(--error); }
 .status-proposed { color: var(--info); border-style: dashed; }
+.batch-map { max-width: var(--content-max); }
+.batch-map p:last-child { margin-bottom: 0; }
+.batch-map .map-node { min-width: 0; padding: 14px 16px; background: var(--raised); border: 1px solid var(--line); border-radius: var(--radius); }
+.batch-map .map-node strong { display: block; }
+.batch-map .map-node p { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
+.batch-map .map-key { border-color: var(--accent); background: var(--accent-soft); }
+.batch-map .map-unknown { border-color: var(--warn); background: var(--warn-bg); }
+.batch-map .map-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.batch-map .map-row.triple { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.batch-map .map-arrow { margin: 10px 0; text-align: center; color: var(--accent); font-size: 14px; font-weight: 600; }
+.batch-map .contains { margin: 14px 0 0; padding: 14px; list-style: none; border: 1px solid var(--line); border-radius: var(--radius); }
+.batch-map .contains li { margin: 0; }
+.batch-map .candidate { padding: 16px; border: 1px dashed var(--info); border-radius: var(--radius); }
+.batch-map .candidate > h3 { color: var(--info); }
+.diff-box { margin: 14px 0; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--paper); }
+.diff-header { padding: 9px 14px; background: var(--raised); border-bottom: 1px solid var(--line); font: 600 12.5px/1.5 var(--mono); color: var(--ink); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.diff-box pre { margin: 0; border: 0; border-radius: 0; padding: 12px 14px; font-size: 12.5px; line-height: 1.65; white-space: pre-wrap; }
+.diff-add { color: var(--success); display: block; background: rgb(42 157 124 / .12); margin: 0 -14px; padding: 1px 14px; }
+.diff-del { color: var(--error); display: block; background: rgb(224 90 82 / .12); margin: 0 -14px; padding: 1px 14px; }
+.diff-ctx { color: var(--muted); display: block; margin: 0 -14px; padding: 1px 14px; }
+.diff-hunk { color: var(--info); display: block; font-weight: 600; margin-top: 4px; }
+.diff-word-del { background: rgb(224 90 82 / .28); color: var(--ink); border-radius: 3px; padding: 0 3px; text-decoration: line-through; }
+.diff-word-add { background: rgb(42 157 124 / .28); color: var(--ink); border-radius: 3px; padding: 0 3px; font-weight: 600; }
+.jump-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.jump-pill { display: inline-flex; align-items: center; gap: 3px; font: 600 11.5px/1.4 var(--mono); padding: 3px 8px; border-radius: 4px; background: var(--raised); color: var(--ink); border: 1px solid var(--line); text-decoration: none; cursor: pointer; }
+.jump-pill:hover, .jump-pill.is-active-pill, .jump-pill.jump-accent { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.explorer-collapse { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 16px; background: var(--paper); margin-top: 12px; }
+.explorer-collapse > summary { font-size: 14px; color: var(--accent); }
+.explorer-float-drawer { position: fixed; right: 20px; bottom: 20px; z-index: 45; width: min(860px, calc(100vw - 32px)); max-height: calc(100vh - 36px); display: flex; flex-direction: column; background: var(--paper); border: 1.5px solid var(--accent); border-radius: 10px; box-shadow: var(--shadow-pop); overflow: hidden; }
+.explorer-float-drawer.is-compare-mode { width: min(1280px, calc(100vw - 32px)); }
+.explorer-float-drawer.is-pinned { border-width: 2px; }
+.explorer-float-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding: 10px 16px; background: var(--accent-soft); border-bottom: 1px solid var(--accent); font-size: 12.5px; }
+.float-bar-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
+.float-title { font-size: 13px; color: var(--ink); overflow-wrap: anywhere; }
+.float-mode-badge { font: 600 11.5px/1.4 var(--mono); color: var(--accent); padding: 2px 7px; border-radius: 4px; background: var(--paper); border: 1px solid var(--accent); white-space: nowrap; }
+.float-bar-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.float-action-btn { font: 600 11.5px/1.3 var(--mono); padding: 4px 9px; border-radius: 4px; }
+.explorer-float-body { padding: 16px 18px; overflow-y: auto; max-height: calc(100vh - 96px); }
+.explorer-float-body > :first-child { margin-top: 0; }
+.explorer-float-body > :last-child { margin-bottom: 0; }
+.score-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr)); gap: 14px; margin: 18px 0; }
+.score-pill { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; justify-content: space-between; }
+.score-pill header { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; font-family: var(--mono); font-size: 13px; }
+.score-pill .score-num { font-size: 21px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+.score-pill p { margin: 6px 0 0; font-size: 13px; line-height: 1.55; color: var(--muted); }
+.trace-stream, .transcript-stream { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+.turn-row { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 18px; align-items: start; padding: 14px 16px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); }
+.turn-row.turn-pass { border-left: 3px solid var(--success); }
+.turn-row.turn-fail { border-left: 3px solid var(--error); background: var(--error-soft); }
+.turn-speaker { font: 11px/1.4 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; display: block; }
+.turn-text { margin: 0; font-size: 14px; line-height: 1.65; color: var(--ink); }
+.turn-note { font-size: 13px; line-height: 1.6; color: var(--muted); padding: 10px 12px; background: var(--raised); border-radius: 6px; border: 1px solid var(--line); }
+.turn-note strong { display: block; color: var(--ink); margin-bottom: 4px; font-size: 12.5px; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; margin: 0 0 14px; padding: 10px 14px; background: var(--raised); border: 1px solid var(--line); border-radius: var(--radius); font-size: 13px; color: var(--ink); }
+.legend-item { display: inline-flex; align-items: center; gap: 8px; }
+.legend-swatch { width: 22px; height: 3px; border-radius: 2px; display: inline-block; position: relative; background: currentColor; }
+.legend-swatch::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; position: absolute; left: 7px; top: -2.5px; }
+.legend-swatch.is-dashed { background: repeating-linear-gradient(90deg, currentColor 0 6px, transparent 6px 10px); }
+.milestone-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr)); gap: 12px; margin-top: 14px; }
+.milestone-node { background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; font-size: 12.5px; line-height: 1.55; }
+.milestone-node strong { display: block; font-family: var(--mono); font-size: 12px; color: var(--ink); margin-bottom: 4px; }
+.milestone-node p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.milestone-node.node-highlight { border-color: var(--accent); background: var(--accent-soft); }
 figure { margin: 22px 0; }
 .figure-stage { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
 figcaption { margin-top: 10px; }
@@ -131,7 +237,11 @@ figure img { display: block; max-width: 100%; height: auto; }
 svg { display: block; max-width: 100%; height: auto; }
 svg text { font-family: var(--font); fill: var(--ink); }
 .diagram-scroll, .table-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
-.diagram-scroll svg { width: 100%; min-width: var(--diagram-min, 640px); }
+.diagram-scroll svg { width: 100%; min-width: var(--diagram-min, 640px); max-width: var(--diagram-max, 1080px); margin-inline: auto; }
+.table-scroll.table-tall { max-height: 72vh; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+@media (min-width: 1024px) {
+  .table-scroll:not(.table-wide):not(.table-tall) { overflow-x: visible; }
+}
 .node { fill: var(--raised); stroke: var(--muted); stroke-width: 1.5; }
 .node-key { fill: var(--accent-soft); stroke: var(--accent); }
 .edge { fill: none; stroke: var(--muted); stroke-width: 1.7; }
@@ -144,7 +254,13 @@ table { width: 100%; border-collapse: collapse; font-size: 14px; }
 caption { text-align: left; color: var(--muted); padding-bottom: 10px; }
 th, td { text-align: left; vertical-align: top; padding: 12px 14px; border-bottom: 1px solid var(--line); }
 th { background: var(--paper); font-weight: 650; }
+thead th { position: sticky; top: 0; z-index: 2; border-bottom: 2px solid var(--line); }
+tbody th[scope="row"] { background: var(--bg); font-weight: 650; }
+tbody tr:hover, tbody tr:hover th[scope="row"] { background: var(--raised); }
 .numeric { font-variant-numeric: tabular-nums; }
+.cite-popover { position: fixed; z-index: 48; max-width: min(26rem, calc(100vw - 32px)); padding: 12px 14px; background: var(--paper); color: var(--ink); border: 1px solid var(--accent); border-radius: var(--radius); box-shadow: var(--shadow-pop); font-size: 13px; line-height: 1.6; pointer-events: none; }
+.cite-popover strong { color: var(--accent); font-family: var(--mono); display: block; margin-bottom: 4px; }
+.cite-popover p { margin: 4px 0 0; color: var(--muted); }
 code, pre { font-family: var(--mono); }
 code { font-size: .85em; overflow-wrap: anywhere; }
 p code, li code, td code { background: var(--raised); padding: 2px 5px; border-radius: 3px; }
@@ -164,36 +280,45 @@ button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(
 button:disabled { opacity: .55; cursor: default; }
 footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; padding-top: 18px; margin-top: 24px; }
 [hidden] { display: none !important; }
+@media (max-width: 960px) {
+  .with-sidenote { grid-template-columns: 1fr; gap: 12px; }
+}
 @media (max-width: 760px) {
-  .report { padding: 20px; }
+  .report, .report.reading-report { padding: 20px 20px 48px; }
+  .report.navigation-ready { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+  .navigation-ready .reading-rail {
+    left: calc(16px + env(safe-area-inset-left, 0px));
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
   .masthead { align-items: flex-start; flex-direction: column; gap: 12px; }
   .hero { padding: 26px 0 22px; }
-  h2 { font-size: 23px; }
-  .lead { font-size: 18px; }
-  .compare, .routes, .layer { grid-template-columns: 1fr; }
+  h2 { font-size: 22px; }
+  .lead { font-size: 17px; }
+  .compare, .routes, .layer, .mental-model, .turn-row, .batch-map .map-row, .batch-map .map-row.triple { grid-template-columns: 1fr; }
   .layer { gap: 12px; }
   .layer-label { display: flex; gap: 12px; align-items: baseline; }
-  .figure-stage { padding: 12px; }
+  .figure-stage, .batch-map .contains, .batch-map .candidate { padding: 12px; }
   .report-section { padding: 24px 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
 @media print {
-  :root { color-scheme: light; --bg: #fff; --paper: #f3f4f5; --raised: #e7ebef; --ink: #18252d; --muted: #465561; --line: #8b99a3; --accent: #9f3c21; --accent-soft: #f8e9e0; --success: #17624e; --warn: #785207; --warn-bg: #fff2cf; --info: #334e92; --error: #972e29; }
+  :root, html[data-theme="light"] { color-scheme: light; --bg: #fff; --paper: #f3f4f5; --raised: #e7ebef; --ink: #18252d; --muted: #465561; --line: #8b99a3; --accent: #9f3c21; --accent-soft: #f8e9e0; --success: #17624e; --warn: #785207; --warn-bg: #fff2cf; --info: #334e92; --error: #972e29; }
   body { font-size: 11pt; }
-  .report { padding: 0; max-width: none; }
-  .report.reading-report { padding: 0; max-width: none; }
+  .report, .report.reading-report, .report.navigation-ready { padding: 0; max-width: none; }
   .reading-layout { display: block; }
-  .reading-rail { display: none !important; }
+  .reading-layout > main { max-width: none; }
+  .reading-rail, .cite-popover, .explorer-float-drawer { display: none !important; }
   nav, .skip, button { display: none !important; }
   h1 { font-size: 26pt; }
   h2 { font-size: 18pt; }
-  figure, tr { break-inside: avoid; }
+  figure, tr, .summary-card { break-inside: avoid; }
   h2, h3 { break-after: avoid; }
   details > * { display: block !important; }
   .diagram-scroll, .table-scroll, pre { overflow: visible; }
-  .diagram-scroll svg { min-width: 0; }
+  .table-scroll.table-tall { max-height: none; border: 0; }
+  .diagram-scroll svg { min-width: 0; max-width: none; }
   pre { white-space: pre-wrap; }
 }
 </style>
@@ -215,7 +340,7 @@ footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 12px
 .chart-key { font-size: 13px; color: var(--muted); margin: 14px 0 0; }
 .chart-key strong { color: var(--warn); font-weight: 500; }
 .chart-row .note { margin: 8px 0 0; }
-.metric-table { min-width: 800px; }
+.metric-table { min-width: 720px; }
 .evidence-list { display: grid; grid-template-columns: 48px minmax(0,1fr); gap: 0 14px; margin: 0; }
 .evidence-list dt, .evidence-list dd { border-top: 1px solid var(--line); padding: 14px 0; margin: 0; }
 .evidence-list dt { color: var(--accent); font-family: var(--mono); }
@@ -232,11 +357,14 @@ footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 12px
 <body>
 <a class="skip" href="#main">跳到正文</a>
 <div class="report reading-report">
-<header class="masthead"><p class="brand">EXPLAIN &amp; REPORT</p></header>
+<header class="masthead">
+  <p class="brand">EXPLAIN &amp; REPORT</p>
+  <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false">☀ 浅色纸张</button>
+</header>
 <div class="reading-layout">
 <aside class="reading-rail" aria-label="阅读导航">
 <details class="report-outline" open><summary>目录</summary>
-<nav aria-label="报告目录"><a href="#decision">交付门槛</a><a href="#tradeoffs">速度与成本</a><a href="#metrics">样本口径</a><a href="#conditions">改选条件</a><a href="#method">方法附录</a><a href="#evidence">材料附录</a></nav>
+<nav aria-label="报告目录"><a href="#decision">01 交付门槛</a><a href="#tradeoffs">02 速度与成本</a><a href="#metrics">03 样本口径</a><a href="#conditions">04 改选条件</a><a class="nav-sub" href="#method">附录 A · p95 口径</a><a class="nav-sub" href="#evidence">附录 B · 原始材料</a></nav>
 </details>
 <div class="reading-progress" data-reading-progress hidden>
 <div class="reading-progress-label"><span>阅读进度</span><output data-reading-value aria-live="off">0%</output></div>
@@ -244,41 +372,66 @@ footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 12px
 </div></aside>
 <main id="main">
 <header class="hero">
-<p class="eyebrow">方案比较 / 合成实验</p>
+<p class="eyebrow">方案比较 / 架构决策（ADR）合成实验</p>
 <h1>导出方案：先满足文件交付，再比较速度</h1>
-<p class="lead">当前同时支持 1,000 行与 100,000 行，建议选择后台导出。决定性证据是大规模成功 20/20；同步仅 12/20，未达到至少 19/20 的交付要求。</p>
-<p class="meta">判断范围：每种规模 20 个配对合成数据集 · 相同单机资源与配置 · 无额外排队负载 · 不代表生产可靠性</p>
+<p class="lead">当前需同时支持 1,000 行与 100,000 行导出，<strong>建议选择后台导出</strong>。决定性证据是大规模成功 <mark>20/20</mark>；同步方案仅 12/20，未达到至少 19/20 的交付门槛。</p>
+<div class="summary-grid" aria-label="架构决策速览">
+  <article class="summary-card">
+    <span class="summary-label">推荐决策</span>
+    <strong class="summary-value">采用后台导出方案</strong>
+    <p>唯一同时满足 1,000 行与 100,000 行全部交付率及延迟门槛的方案。</p>
+  </article>
+  <article class="summary-card card-evidence">
+    <span class="summary-label">决定性证据</span>
+    <strong class="summary-value">10万行交付：20/20 vs 12/20</strong>
+    <p>同步导出因 30 秒超时丢失 8 次文件，未达 ≥19/20 的硬性交付要求。</p>
+  </article>
+  <article class="summary-card card-boundary">
+    <span class="summary-label">代价与未知边界</span>
+    <strong class="summary-value">小规模慢 0.8s · 需维护任务状态</strong>
+    <p>高并发排队、进程崩溃恢复与权限过期尚未实测，上线前需补齐。</p>
+  </article>
+  <article class="summary-card card-retell">
+    <span class="summary-label">核心归因结论</span>
+    <strong class="summary-value">“先保交付率；29s 只是幸存者耗时。”</strong>
+    <p>同步的 29s 仅统计了 12 次成功样本，不能拿来跟后台 20 次全量成功的 62s 比快慢。</p>
+  </article>
+</div>
+<p class="meta">实验基线：每种规模 20 个配对合成数据集 · 相同单机资源与配置 · 无额外排队负载 · 不代表生产可靠性</p>
 </header>
 
 <section class="report-section" id="decision" aria-labelledby="decision-title">
-<div class="section-heading"><span class="section-number">01</span><h2 id="decision-title">同步的大规模交付次数未达门槛</h2></div>
+<div class="section-heading"><span class="section-number">01</span><h2 id="decision-title">同步方案大规模交付仅 12/20，未达到 ≥19/20 的上线门槛</h2></div>
 <div class="prose">
-<p>用户需要拿到可下载文件。后台方案也满足本次实验的时间要求：提交确认 p95（第 95 百分位耗时）均低于 2 秒，1,000 行端到端 p95 为 2.1 秒（要求 ≤10 秒），100,000 行为 62 秒（要求 ≤90 秒）。同步的大规模交付次数不足，见图 1。<a href="#C1">[C1]</a> <a href="#C2">[C2]</a> <a href="#C3">[C3]</a></p>
-
+<p>用户需要拿到可下载文件，而不是只看到受理提示。对照下图 19 次门槛线：后台方案两档规模均 20/20 交付，端到端 p95 分别为 2.1 秒（要求 ≤10 秒）与 62 秒（要求 ≤90 秒）；同步方案在 100,000 行下因超时丢弃 8 次交付。<a href="#C1">[C1]</a> <a href="#C2">[C2]</a> <a href="#C3">[C3]</a></p>
 </div>
 <figure data-figure-id="large-delivery" aria-labelledby="large-title">
 <div class="figure-stage">
 <h3 id="large-title">100,000 行：至少 19/20 次成功才达标</h3>
+<div class="chart-legend" aria-label="交付状态图例">
+  <span class="legend-item" style="color: var(--accent);"><span class="legend-swatch" aria-hidden="true"></span>后台导出（已交付）</span>
+  <span class="legend-item" style="color: var(--muted);"><span class="legend-swatch" aria-hidden="true"></span>同步导出（已交付）</span>
+  <span class="legend-item" style="color: var(--warn);"><span class="legend-swatch is-dashed" aria-hidden="true"></span>19 次合格门槛线</span>
+</div>
 <div class="count-chart">
 <div class="chart-row">
-<div class="chart-row-label"><span>同步导出</span><strong>成功 12/20</strong></div>
+<div class="chart-row-label"><span>同步导出</span><strong>成功 12/20（未达标）</strong></div>
 <div class="chart-track" aria-hidden="true"><span class="chart-bar chart-sync" style="width:60%"></span><span class="chart-bar chart-missing" style="width:40%"></span><span class="chart-threshold" style="left:95%"></span></div>
-<p class="note">其余 8 次未返回文件；完成时长未知。</p>
+<p class="note">其余 8 次因客户端 30 秒超时未返回文件；实际完成时长未知。</p>
 </div>
 <div class="chart-row">
-<div class="chart-row-label"><span>后台导出</span><strong>成功 20/20</strong></div>
+<div class="chart-row-label"><span>后台导出</span><strong>成功 20/20（达标）</strong></div>
 <div class="chart-track" aria-hidden="true"><span class="chart-bar chart-background" style="width:100%"></span><span class="chart-threshold" style="left:95%"></span></div>
 </div>
 <div class="chart-axis" aria-hidden="true"><span>0</span><span>20 次</span></div>
-<p class="chart-key">实心：已交付文件 · 虚线框：未交付文件<br><strong>竖虚线：19 次成功的门槛</strong></p>
 </div></div>
-<figcaption>图 1 · 同一组 20 个合成数据集；失败保留在分母中。次数反映本次实验，不是生产成功率。证据：<a href="#C1">C1</a>、<a href="#C3">C3</a>。</figcaption>
+<figcaption>图 1 · 同一组 20 个合成数据集，失败保留在分母中；次数反映本次实验，不代表生产可靠性。证据：<a href="#C1">C1</a>、<a href="#C3">C3</a>。</figcaption>
 </figure>
 </section>
 
 <section class="report-section" id="tradeoffs" aria-labelledby="tradeoffs-title">
-<div class="section-heading"><span class="section-number">02</span><h2 id="tradeoffs-title">小规模同步更快交付，后台更早确认</h2></div>
-<div class="prose"><p>提交确认是系统对提交操作的反馈；端到端耗时则量到文件可下载。同步直接返回文件，这两个时点重合；后台先确认接收，再交付文件。小规模实验中，后台更早确认，但端到端 p95 比同步多 0.8 秒。两者在此规模均成功 20/20，且满足两项时间要求。<a href="#C1">[C1]</a> <a href="#C2">[C2]</a> <a href="#C5">[C5]</a></p></div>
+<div class="section-heading"><span class="section-number">02</span><h2 id="tradeoffs-title">小规模下后台确认更快，代价是端到端多 0.8 秒并需维护任务状态</h2></div>
+<div class="prose"><p><strong>提交确认</strong>记录请求何时受理，<strong>端到端耗时</strong>量到文件何时可下载。同步把两件事合二为一，因此小规模下 1.3 秒直接拿文件；后台先在 0.18 秒确认受理，再异步写盘，端到端 p95 为 2.1 秒。<a href="#C1">[C1]</a> <a href="#C2">[C2]</a> <a href="#C5">[C5]</a></p></div>
 <figure data-figure-id="small-latency" aria-labelledby="small-title">
 <div class="figure-stage">
 <h3 id="small-title">1,000 行：确认与交付分开看</h3>
@@ -298,36 +451,47 @@ footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 12px
 <p class="chart-key"><strong>上限：10 秒</strong></p>
 </div>
 </div></div>
-<figcaption>图 2 · 两个面板标尺不同，均从零起；竖虚线是各自上限。每个 p95 对应 20 次运行。证据：<a href="#C1">C1</a>、<a href="#C2">C2</a>。</figcaption>
+<figcaption>图 2 · 两个面板标尺不同，均从零起；竖虚线是各自上限，每组均对应 20 次配对运行。证据：<a href="#C1">C1</a>、<a href="#C2">C2</a>。</figcaption>
 </figure>
-<div class="prose">
-<p>后台也增加了实现责任：持久任务记录、状态查询、下载入口和失败重试。业务已具备可复用的队列与任务存储，但本实验没有量化开发或运维成本，不能把复用解释为没有额外成本。小规模的 0.8 秒差异也不能推导为这些组件各自的耗时。<a href="#C5">[C5]</a></p>
+<div class="with-sidenote">
+  <div class="prose">
+    <p>选择后台导出需要承担四项实现责任：持久任务记录、状态查询、下载入口与失败重试。尽管现有平台提供可复用的队列和存储，排期仍须计入联调与运维成本。<a href="#C5">[C5]</a></p>
+  </div>
+  <aside class="sidenote" aria-label="成本与耗时推导限制">
+    <strong>口径边界</strong>
+    本实验未量化开发或运维工时，不能把基础设施复用当作零额外成本；小规模的 0.8 秒差值也不能拆解为各组件耗时。<a href="#C5">[C5]</a>
+  </aside>
 </div>
 </section>
 
 <section class="report-section" id="metrics" aria-labelledby="metrics-title">
-<div class="section-heading"><span class="section-number">03</span><h2 id="metrics-title">29 秒与 62 秒的样本口径不同</h2></div>
-<div class="prose"><p>同步大规模端到端 p95 的 29 秒仅覆盖 12 次成功；另外 8 次未返回文件，完成时长未知。后台的 62 秒覆盖 20 次成功。因此，这两个数不能说明同步对整组请求更快，也不能把失败时长填成 0 或 30 秒。30 秒只是同步客户端请求超时上限。<a href="#C3">[C3]</a> <a href="#C4">[C4]</a></p></div>
+<div class="section-heading"><span class="section-number">03</span><h2 id="metrics-title">29 秒只是 12 次幸存样本的耗时，不能直接与后台 62 秒比快慢</h2></div>
+<div class="with-sidenote">
+  <div class="prose"><p>同步大规模端到端 p95 的 <strong>29 秒仅统计 12 次成功样本</strong>，另有 8 次超时未返回文件；后台的 <strong>62 秒则覆盖全部 20 次运行</strong>。两者分母不等价，把 29 秒当作“同步更快”属于幸存者偏差。<a href="#C3">[C3]</a> <a href="#C4">[C4]</a></p></div>
+  <aside class="sidenote" aria-label="缺失值处理规则">
+    <strong>禁止填补超时样本</strong>
+    不能把失败的 8 次时长填成 0 秒或 30 秒；30 秒只是同步客户端请求超时上限，不代表服务端实际完成时间。<a href="#C3">[C3]</a>
+  </aside>
+</div>
 <div class="table-scroll" tabindex="0" role="region" aria-label="完整实验指标，可横向滚动">
 <table class="metric-table numeric">
-<caption>表 1 · 秒为时间单位；端到端 p95 的样本数单独列出，失败仍保留在成功次数分母。全部数值来自 C1–C4。</caption>
+<caption>表 1 · 秒为时间单位；端到端 p95 的样本数单独列出，失败仍保留在成功次数分母。</caption>
 <thead><tr><th scope="col">规模 / 方案</th><th scope="col">提交确认 p95<br>要求 ≤2 秒</th><th scope="col">端到端 p95</th><th scope="col">成功 / 总数</th><th scope="col">对当前要求的判断</th></tr></thead>
 <tbody>
-<tr><th scope="row">1,000 行 · 同步</th><td>1.3 秒</td><td>1.3 秒（n=20）<br><span class="note">要求 ≤10 秒</span></td><td>20/20</td><td><span class="status-success">已测时间要求满足</span></td></tr>
-<tr><th scope="row">1,000 行 · 后台</th><td>0.18 秒</td><td>2.1 秒（n=20）<br><span class="note">要求 ≤10 秒</span></td><td>20/20</td><td><span class="status-success">已测时间要求满足</span></td></tr>
-<tr><th scope="row">100,000 行 · 同步</th><td>未单独提供</td><td>29 秒（仅成功 n=12）<br><span class="note">全组 p95 无法由给定信息确定</span></td><td>12/20<br><span class="note">要求 ≥19/20</span></td><td><span class="status-error">成功次数不满足</span><br>端到端全组口径、确认指标不齐</td></tr>
-<tr><th scope="row">100,000 行 · 后台</th><td>0.22 秒</td><td>62 秒（n=20）<br><span class="note">要求 ≤90 秒</span></td><td>20/20<br><span class="note">要求 ≥19/20</span></td><td><span class="status-success">已测要求均满足</span></td></tr>
+<tr><th scope="row">1,000 行 · 同步</th><td>1.3 秒</td><td>1.3 秒（n=20）<br><span class="note">要求 ≤10 秒</span></td><td>20/20</td><td><span class="badge status-success">已达标</span> <strong>全项满足</strong> 小规模两项延迟与交付均合格。<div class="jump-links"><a class="jump-pill" href="#C2" data-drawer-target="C2" data-drawer-title="C2 · 1,000 行基准数据">原始基准 ↗</a></div></td></tr>
+<tr><th scope="row">1,000 行 · 后台</th><td>0.18 秒</td><td>2.1 秒（n=20）<br><span class="note">要求 ≤10 秒</span></td><td>20/20</td><td><span class="badge status-success">已达标</span> <strong>确认极快</strong> 端到端虽多 0.8s 仍在上限内。<div class="jump-links"><a class="jump-pill" href="#C2" data-drawer-target="C2" data-drawer-title="C2 · 1,000 行基准数据">原始基准 ↗</a></div></td></tr>
+<tr><th scope="row">100,000 行 · 同步</th><td>未单独提供</td><td>29 秒（仅成功 n=12）<br><span class="note">全组口径缺失</span></td><td>12/20<br><span class="note">要求 ≥19/20</span></td><td><span class="badge status-error">不达标</span> <strong>丢弃 8 次</strong> 交付次数不足且全组延迟未知。<div class="jump-links"><a class="jump-pill jump-accent" href="#C3" data-drawer-target="C3" data-drawer-title="C3 · 100,000 行基准数据">超限明细 ↗</a></div></td></tr>
+<tr><th scope="row">100,000 行 · 后台</th><td>0.22 秒</td><td>62 秒（n=20）<br><span class="note">要求 ≤90 秒</span></td><td>20/20<br><span class="note">要求 ≥19/20</span></td><td><span class="badge status-success">已达标</span> <strong>唯一全通</strong> 唯一满足交付与全部阈值方案。<div class="jump-links"><a class="jump-pill" href="#C3" data-drawer-target="C3" data-drawer-title="C3 · 100,000 行基准数据">原始基准 ↗</a></div></td></tr>
 </tbody></table></div>
-
 </section>
 
 <section class="report-section" id="conditions" aria-labelledby="conditions-title">
-<div class="section-heading"><span class="section-number">04</span><h2 id="conditions-title">什么证据会改变选择</h2></div>
+<div class="section-heading"><span class="section-number">04</span><h2 id="conditions-title">需求缩回纯小规模或同步补齐 19/20 实测时，才值得改选</h2></div>
 <div class="compare">
-<article class="component"><h3>需求缩小到仅 1,000 行</h3><p><span class="badge status-proposed">条件性建议</span></p><p>若不再要求支持 100,000 行，且保留相同交互门槛，可改选同步：本次小规模两项时间要求都满足、20/20 成功。同步直接返回文件，提交确认与端到端 p95 均为 1.3 秒。其实现也不需要本次后台方案增加的任务查询与下载流程。成本优势仍应实测，不能从结构更少推算金额或工期。</p><p>依据：<a href="#C2">C2</a>、<a href="#C5">C5</a>、<a href="#C6">C6</a>。</p></article>
-<article class="component"><h3>同步方案获得新的达标证据</h3><p><span class="badge status-proposed">重新比较的条件</span></p><p>若两种规模仍都需要，只有同步方案在可比测试中满足确认 p95 ≤2 秒、小规模端到端 p95 ≤10 秒、大规模端到端 p95 ≤90 秒与至少 19/20 成功，才有重新比较的基础。新实验须披露失败与延迟分母，再结合实际开发和运维成本决定是否切换。</p><p>提高客户端 30 秒超时上限本身不证明达标，也不证明可以更早确认。依据：<a href="#C1">C1</a>、<a href="#C3">C3</a>、<a href="#C5">C5</a>。</p></article>
+<article class="component"><h3>场景 A · 需求缩小到仅 1,000 行</h3><p><span class="badge status-proposed">条件性改选建议</span></p><p>若不再支持 100,000 行且交互门槛不变，<strong>可改选同步方案</strong>：小规模下同步 20/20 成功、端到端 1.3 秒，还省去了后台任务查询与下载链路（工期收益须另外实测）。</p><p>依据：<a href="#C2">[C2]</a> <a href="#C5">[C5]</a> <a href="#C6">[C6]</a></p></article>
+<article class="component"><h3>场景 B · 同步方案获得新的达标证据</h3><p><span class="badge status-proposed">重新比较的条件</span></p><p>若两种规模仍需保留，同步方案必须先在可比测试中跑满 ≥19/20 成功且全部 p95 达标，才有重评基础。单纯调高客户端 30 秒超时上限并不算达标。</p><p>依据：<a href="#C1">[C1]</a> <a href="#C3">[C3]</a> <a href="#C5">[C5]</a></p></article>
 </div>
-<div class="prose" style="margin-top:20px"><p>接下来影响选择的关键未知量，是目标并发下后台排队是否使提交确认或端到端 p95 越过既定门槛，以及崩溃恢复、文件保留和权限过期是否破坏文件可用性。应在这些条件下补测。若后台不再达标，需要重新评估；这不会自动使当前未达标的同步方案成为合格替代。<a href="#C5">[C5]</a> <a href="#C6">[C6]</a></p></div>
+<div class="caveat-box"><p><strong>上线前待补测项（未测边界）：</strong>高并发下后台排队会否拖垮确认或端到端耗时，以及进程崩溃恢复、文件过期与权限失效会否破坏下载可用性。若后台补测失守须重新评估，但不会自动让未达标的同步方案变为合格。<a href="#C5">[C5]</a> <a href="#C6">[C6]</a></p></div>
 </section>
 
 <section class="report-section" id="method" aria-labelledby="method-title">
@@ -348,7 +512,7 @@ footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 12px
 </section>
 </main>
 </div>
-
+<footer>方案评估报告 · 合成实验参考</footer>
 </div>
 <script id="report-navigation">
 /* Progressive reading navigation; static links and article content work without JS. */
@@ -366,6 +530,287 @@ footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 12px
     });
     if (atEnd && sectionTops.length) active = sectionTops.length - 1;
     return { progress, active };
+  }
+
+  function initThemeToggle(doc, report) {
+    const toggle = report.querySelector('[data-theme-toggle]');
+    if (!toggle || !doc.documentElement || typeof doc.documentElement.setAttribute !== 'function') return;
+    function syncLabel() {
+      const isLight = doc.documentElement.getAttribute && doc.documentElement.getAttribute('data-theme') === 'light';
+      toggle.setAttribute('aria-pressed', isLight ? 'true' : 'false');
+      toggle.textContent = isLight ? '☾ 深色阅读' : '☀ 浅色纸张';
+    }
+    syncLabel();
+    toggle.addEventListener('click', () => {
+      const current = doc.documentElement.getAttribute && doc.documentElement.getAttribute('data-theme');
+      if (current === 'light') {
+        if (doc.documentElement.removeAttribute) doc.documentElement.removeAttribute('data-theme');
+      } else {
+        doc.documentElement.setAttribute('data-theme', 'light');
+      }
+      syncLabel();
+    });
+  }
+
+  function initCitationPreviews(doc, win, report, main) {
+    if (typeof main.querySelectorAll !== 'function' || typeof doc.createElement !== 'function' || !doc.body) return;
+    const citeLinks = Array.from(main.querySelectorAll('a[href^="#"]')).flatMap(link => {
+      let id;
+      try { id = decodeURIComponent(link.getAttribute('href').slice(1)); }
+      catch (_) { return []; }
+      const target = id && doc.getElementById(id);
+      if (!target || target.tagName !== 'DT') return [];
+      const dd = target.nextElementSibling;
+      if (!dd || dd.tagName !== 'DD') return [];
+      const code = dd.querySelector && dd.querySelector('code');
+      const sourceText = code ? ` · ${code.textContent}` : '';
+      const bodyText = Array.from(dd.querySelectorAll ? dd.querySelectorAll('p') : [])
+        .map(p => p.textContent).join(' ') || dd.textContent;
+      return [{ el: link, title: `证据 ${target.textContent}${sourceText}`, body: bodyText }];
+    });
+    const tipNodes = Array.from(main.querySelectorAll('[data-tip-title]')).flatMap(el => {
+      const title = el.getAttribute('data-tip-title');
+      const body = el.getAttribute('data-tip-body') || '';
+      return title ? [{ el, title, body }] : [];
+    });
+    const items = [...citeLinks, ...tipNodes];
+    if (!items.length) return;
+
+    const popover = doc.createElement('div');
+    popover.className = 'cite-popover';
+    popover.setAttribute('role', 'tooltip');
+    popover.hidden = true;
+    doc.body.appendChild(popover);
+
+    function show({ el, title, body }) {
+      if (popover.replaceChildren) popover.replaceChildren();
+      else popover.textContent = '';
+      const heading = doc.createElement('strong');
+      heading.textContent = title;
+      popover.appendChild(heading);
+      if (body) {
+        const para = doc.createElement('p');
+        para.textContent = body;
+        popover.appendChild(para);
+      }
+      popover.hidden = false;
+      const rect = el.getBoundingClientRect();
+      const vw = win.innerWidth || 1280;
+      const vh = win.innerHeight || 800;
+      const left = Math.min(Math.max(16, rect.left), vw - 396);
+      const top = Math.min(Math.max(12, rect.top + (rect.height || 20) + 10), vh - 140);
+      if (popover.style) {
+        popover.style.top = `${top}px`;
+        popover.style.left = `${Math.max(16, left)}px`;
+      }
+    }
+
+    function hide() { popover.hidden = true; }
+
+    items.forEach(item => {
+      item.el.addEventListener('mouseenter', () => show(item));
+      item.el.addEventListener('mouseleave', hide);
+      item.el.addEventListener('focus', () => show(item));
+      item.el.addEventListener('blur', hide);
+    });
+    win.addEventListener('scroll', hide, { passive: true });
+  }
+
+  function initFloatDrawer(doc, win, report, scheduleTimer, cancelTimer) {
+    if (typeof report.querySelectorAll !== 'function' || typeof doc.createElement !== 'function' || !doc.body) return;
+    const rawTriggers = Array.from(report.querySelectorAll('[data-drawer-target]'));
+    const triggers = rawTriggers.filter(el => {
+      const id = el.getAttribute && el.getAttribute('data-drawer-target');
+      return id && doc.getElementById(id);
+    });
+    if (!triggers.length) return;
+
+    const drawer = doc.createElement('aside');
+    drawer.className = 'explorer-float-drawer';
+    drawer.setAttribute('aria-label', '明细检视窗');
+    drawer.hidden = true;
+
+    const bar = doc.createElement('div');
+    bar.className = 'explorer-float-bar';
+    const left = doc.createElement('div');
+    left.className = 'float-bar-left';
+    const badge = doc.createElement('span');
+    badge.className = 'float-mode-badge';
+    badge.textContent = '预览模式';
+    const titleEl = doc.createElement('strong');
+    titleEl.className = 'float-title';
+    left.appendChild(badge);
+    left.appendChild(titleEl);
+
+    const actions = doc.createElement('div');
+    actions.className = 'float-bar-actions';
+    const pinBtn = doc.createElement('button');
+    pinBtn.type = 'button';
+    pinBtn.className = 'float-action-btn';
+    pinBtn.setAttribute('data-drawer-pin', '');
+    pinBtn.textContent = '固定窗口';
+    const jumpBtn = doc.createElement('button');
+    jumpBtn.type = 'button';
+    jumpBtn.className = 'float-action-btn';
+    jumpBtn.setAttribute('data-drawer-jump', '');
+    jumpBtn.textContent = '定位原文';
+    const closeBtn = doc.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'float-action-btn';
+    closeBtn.setAttribute('data-drawer-close', '');
+    closeBtn.textContent = '关闭';
+    actions.appendChild(pinBtn);
+    actions.appendChild(jumpBtn);
+    actions.appendChild(closeBtn);
+    bar.appendChild(left);
+    bar.appendChild(actions);
+
+    const body = doc.createElement('div');
+    body.className = 'explorer-float-body';
+    drawer.appendChild(bar);
+    drawer.appendChild(body);
+    doc.body.appendChild(drawer);
+
+    let activeId = null;
+    let drawerPinned = false;
+    let drawerTimer = null;
+
+    function clearDrawerTimer() {
+      if (drawerTimer !== null) {
+        cancelTimer(drawerTimer);
+        drawerTimer = null;
+      }
+    }
+
+    function stripIds(node) {
+      if (!node || typeof node !== 'object') return;
+      if (node.removeAttribute) node.removeAttribute('id');
+      if (node.children) Array.from(node.children).forEach(stripIds);
+    }
+
+    function renderTarget(trigger, target) {
+      if (body.replaceChildren) body.replaceChildren();
+      else body.textContent = '';
+      if (typeof target.cloneNode === 'function') {
+        const clone = target.cloneNode(true);
+        stripIds(clone);
+        if (clone.tagName === 'DETAILS') clone.open = true;
+        if (target.tagName === 'DT' && target.nextElementSibling && target.nextElementSibling.tagName === 'DD' &&
+            typeof target.nextElementSibling.cloneNode === 'function') {
+          const dl = doc.createElement('dl');
+          dl.className = 'evidence-list';
+          const dtClone = clone;
+          const ddClone = target.nextElementSibling.cloneNode(true);
+          stripIds(ddClone);
+          dl.appendChild(dtClone);
+          dl.appendChild(ddClone);
+          body.appendChild(dl);
+        } else {
+          body.appendChild(clone);
+        }
+      } else {
+        const p = doc.createElement('p');
+        p.textContent = target.textContent || '';
+        body.appendChild(p);
+      }
+      const title = (trigger.getAttribute('data-drawer-title') || trigger.textContent || activeId || '').trim();
+      titleEl.textContent = title;
+      const isCompare = trigger.getAttribute('data-drawer-wide') === 'true';
+      if (drawer.classList) {
+        drawer.classList.toggle('is-compare-mode', isCompare);
+        drawer.classList.toggle('is-pinned', drawerPinned);
+      }
+    }
+
+    function syncDrawerState() {
+      badge.textContent = drawerPinned ? '已固定' : '预览模式';
+      pinBtn.setAttribute('aria-pressed', drawerPinned ? 'true' : 'false');
+      pinBtn.textContent = drawerPinned ? '取消固定' : '固定窗口';
+      if (drawer.classList) drawer.classList.toggle('is-pinned', drawerPinned);
+      if (drawerPinned) drawer.setAttribute('data-drawer-pinned', 'true');
+      else drawer.removeAttribute('data-drawer-pinned');
+      triggers.forEach(el => {
+        const active = !drawer.hidden && el.getAttribute('data-drawer-target') === activeId;
+        if (el.classList) el.classList.toggle('is-active-pill', active);
+      });
+    }
+
+    function openDrawer(trigger, pinNow) {
+      const id = trigger.getAttribute('data-drawer-target');
+      const target = id && doc.getElementById(id);
+      if (!target) return;
+      clearDrawerTimer();
+      activeId = id;
+      if (pinNow) drawerPinned = true;
+      renderTarget(trigger, target);
+      drawer.hidden = false;
+      syncDrawerState();
+    }
+
+    function closeDrawer() {
+      clearDrawerTimer();
+      drawerPinned = false;
+      activeId = null;
+      drawer.hidden = true;
+      syncDrawerState();
+    }
+
+    function scheduleDrawerClose() {
+      clearDrawerTimer();
+      if (drawerPinned) return;
+      drawerTimer = scheduleTimer(() => {
+        drawerTimer = null;
+        if (!drawerPinned) closeDrawer();
+      }, 240);
+    }
+
+    triggers.forEach(trigger => {
+      trigger.addEventListener('mouseenter', () => {
+        clearDrawerTimer();
+        if (!drawerPinned) openDrawer(trigger, false);
+      });
+      trigger.addEventListener('mouseleave', scheduleDrawerClose);
+      trigger.addEventListener('click', event => {
+        if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey ||
+            (event.button != null && event.button !== 0)) return;
+        event.preventDefault();
+        const id = trigger.getAttribute('data-drawer-target');
+        if (drawerPinned && !drawer.hidden && activeId === id) {
+          closeDrawer();
+          return;
+        }
+        openDrawer(trigger, true);
+      });
+    });
+
+    drawer.addEventListener('mouseenter', clearDrawerTimer);
+    drawer.addEventListener('mouseleave', scheduleDrawerClose);
+    pinBtn.addEventListener('click', () => {
+      drawerPinned = !drawerPinned;
+      syncDrawerState();
+    });
+    closeBtn.addEventListener('click', closeDrawer);
+    jumpBtn.addEventListener('click', () => {
+      const id = activeId;
+      const target = id && doc.getElementById(id);
+      closeDrawer();
+      if (!target) return;
+      let cur = target;
+      while (cur) {
+        if (cur.tagName === 'DETAILS') cur.open = true;
+        cur = cur.parentNode;
+      }
+      if (typeof target.scrollIntoView === 'function') {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (win.location && id) {
+        win.location.hash = `#${id}`;
+      }
+    });
+    doc.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && !drawer.hidden) {
+        closeDrawer();
+      }
+    });
   }
 
   function initReadingNavigation(doc, win) {
@@ -392,11 +837,26 @@ footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 12px
     });
     if (!entries.length) return false;
 
-    const wide = win.matchMedia('(min-width: 1440px)');
+    const scheduleTimer = (win && win.setTimeout) ? win.setTimeout.bind(win) : setTimeout;
+    const cancelTimer = (win && win.clearTimeout) ? win.clearTimeout.bind(win) : clearTimeout;
     let queued = false;
+    let pinned = false;
+    let hoverTimer = null;
+
+    function clearHoverTimer() {
+      if (hoverTimer !== null) {
+        cancelTimer(hoverTimer);
+        hoverTimer = null;
+      }
+    }
+
+    function syncPinned() {
+      if (pinned) rail.setAttribute('data-toc-pinned', 'true');
+      else rail.removeAttribute('data-toc-pinned');
+    }
 
     function refresh() {
-      // Both the sidebar and floating outline leave the top of the article clear.
+      // The bottom-left floating TOC leaves the top of the article clear.
       const offset = 24;
       doc.documentElement.style.setProperty('--reading-offset', `${offset}px`);
       const visible = entries.filter(entry => entry.target.getClientRects().length);
@@ -420,35 +880,71 @@ footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 12px
       win.requestAnimationFrame(() => { queued = false; refresh(); });
     }
 
-    function setMode() { outline.open = wide.matches; refresh(); }
-
+    rail.addEventListener('mouseenter', () => {
+      clearHoverTimer();
+      outline.open = true;
+      refresh();
+    });
+    rail.addEventListener('mouseleave', () => {
+      clearHoverTimer();
+      if (pinned) return;
+      hoverTimer = scheduleTimer(() => {
+        hoverTimer = null;
+        if (!pinned) {
+          outline.open = false;
+          refresh();
+        }
+      }, 220);
+    });
+    summary.addEventListener('click', event => {
+      event.preventDefault();
+      clearHoverTimer();
+      pinned = !pinned;
+      outline.open = pinned;
+      syncPinned();
+      refresh();
+    });
     nav.addEventListener('click', event => {
-      if (wide.matches || event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey ||
+      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey ||
           (event.button != null && event.button !== 0)) return;
       const link = event.target.closest && event.target.closest('a');
       if (entries.some(entry => entry.link === link)) {
-        outline.open = false;
+        clearHoverTimer();
+        if (!pinned || (win.innerWidth || 1280) < 760) {
+          pinned = false;
+          outline.open = false;
+          syncPinned();
+        }
         // Update the scroll offset before the browser follows the ordinary hash link.
         refresh();
       }
     });
     outline.addEventListener('keydown', event => {
       if (event.key !== 'Escape' || !outline.open) return;
+      clearHoverTimer();
+      pinned = false;
       outline.open = false;
+      syncPinned();
       if (nav.contains(doc.activeElement)) summary.focus();
       event.preventDefault();
       refresh();
     });
     doc.addEventListener('pointerdown', event => {
-      if (!wide.matches && outline.open && !rail.contains(event.target)) {
+      if (outline.open && !rail.contains(event.target)) {
+        clearHoverTimer();
+        pinned = false;
         outline.open = false;
+        syncPinned();
         refresh();
       }
     });
     outline.addEventListener('toggle', schedule);
-    wide.addEventListener('change', setMode);
     win.addEventListener('scroll', schedule, { passive: true });
-    for (const event of ['resize', 'hashchange', 'pageshow', 'load']) win.addEventListener(event, schedule);
+    win.addEventListener('resize', () => {
+      if (!pinned) outline.open = false;
+      schedule();
+    });
+    for (const event of ['hashchange', 'pageshow', 'load']) win.addEventListener(event, schedule);
     if (win.ResizeObserver) {
       const observer = new win.ResizeObserver(schedule);
       observer.observe(main);
@@ -456,9 +952,15 @@ footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 12px
     }
     if (doc.fonts) doc.fonts.ready.then(schedule);
 
+    initThemeToggle(doc, report);
+    initCitationPreviews(doc, win, report, main);
+    initFloatDrawer(doc, win, report, scheduleTimer, cancelTimer);
+
     report.classList.add('navigation-ready');
     progress.hidden = false;
-    setMode();
+    outline.open = false;
+    syncPinned();
+    refresh();
     schedule();
     return true;
   }

@@ -41,7 +41,7 @@ For a diagnosis, start with the actual path and its failure, then show the propo
 | Ownership or scope changes | Named boundary crossed by a labeled data edge | Color alone or a floating “scope” heading |
 | Current and proposed behavior differ | Aligned views with stable names and the changed edge/condition marked | Different layouts that obscure what changed |
 
-`assets/flow-patterns.html` demonstrates fan-out, converging inputs, branching, and aggregation boundaries. `mechanism-walkthrough.html` covers sequence replay and state changes. These are component examples, not complete-report outlines; reuse only the relevant parts in an external run. For complete reading paths, use the Explain or Report reference selected in `SKILL.md`.
+`assets/flow-patterns.html` demonstrates fan-out, converging inputs, branching, and aggregation boundaries using the built-in `.batch-map` CSS Grid classes in `assets/report-theme.css`. Prefer `.batch-map` (`.map-node`, `.map-row`, `.map-arrow`, `.contains`, `.candidate`) over hand-calculated wide SVGs whenever the relationship is containment, converging inputs, or a 2–3 way branch: DOM nodes preserve exact font sizes and reflow into a single column on narrow screens without sideways scrolling. `mechanism-walkthrough.html` covers sequence replay and state changes. These are component examples, not complete-report outlines; reuse only the relevant parts in an external run. For complete reading paths, use the Explain or Report reference selected in `SKILL.md`.
 
 ## Preserve topology and evidence
 
@@ -62,7 +62,7 @@ Start from one concrete case, not a collection of component names. Write its inp
 - Give each diagram one question and one takeaway. Split an oversized graph into an overview and focused details.
 - Label arrows with actions/data; label decision exits with the actual condition or yes/no meaning. Distinguish rejected, cleared, pending, and accepted states with words.
 - Keep the same actors and names across the overview, replay, and comparison. Do not mix components, business phases, and implementation details at one unexplained level.
-- Draw SVG edges before nodes; use actual SVG lines/paths and arrow markers. Reserve room for labels. Reflow simple input, decision, and containment diagrams into a readable narrow-screen structure. Use local scrolling for irreducibly wide sequences; do not shrink labels beyond readability. A chart's threshold/reference line must remain visible over its marks.
+- Draw SVG edges before nodes; use actual SVG lines/paths and arrow markers. Reserve room for labels and keep SVG `<text>` labels concise (`<= 36` characters; `check_report.py` warns on longer `<text>`). Move chart legends and multi-clause milestone notes into external HTML (`.chart-legend`, `.legend-item`, `.legend-swatch`, `.milestone-strip`, `.milestone-node`) so text never collides inside SVG. `.diagram-scroll svg` defaults to `max-width: var(--diagram-max, 1080px)` to avoid giant poster scaling on wide canvases; set `--diagram-max: 100%` only for genuinely wide multi-lane charts. Reflow simple input, decision, and containment diagrams into a readable narrow-screen structure. Use local scrolling for irreducibly wide sequences; do not shrink labels beyond readability. A chart's threshold/reference line must remain visible over its marks.
 - Show real timestamps only when supported. Event rows do not imply equal durations. Label synthetic timing and equality/tie-breaking assumptions explicitly.
 - Draw the relevant exception path, not only the success path. If an exception is unknown, label the gap rather than inventing a branch.
 
@@ -78,7 +78,7 @@ For another process, replace actors, guards, and effects together. A row of thre
 
 ### 2. Event replay
 
-Each step represents one event, not one paragraph revealed. Keep the full sequence visible and emphasize the selected event. Show its timestamp/order, changed state, and the reason for the transition next to it.
+Each step represents one event, not one paragraph revealed. Keep the full sequence visible and emphasize the selected event. Show its timestamp/order, changed state, and the reason for the transition next to it. Display the event list (`.timeline`) as an interactive step strip so readers can click any event card directly or use the playback controls.
 
 The example opens at the final snapshot so the result is visible immediately. Readers can step backward/forward, scrub, return to the start, or play/pause. Playback uses a fixed reading cadence, explicitly unrelated to simulated elapsed time. Nothing autoplays.
 
@@ -91,6 +91,14 @@ Change only a meaningful input or assumption: arrival order, retry limit, queue 
 The example varies old-result arrival time around a fixed interruption time and compares generation checking on/off. Before interruption, the old result can enter and then be cleared; after interruption, the guard determines whether it re-enters. At equal timestamps, the model explicitly processes interruption first.
 
 One pure `simulate(settings)` returns event snapshots. The selected snapshot drives the sequence highlight, queue, generation value, event list, and caption. The comparison runs the same model with each policy. Avoid separate hard-coded prose or chart calculations that disagree after an input changes.
+
+### 4. Version diffs, trace streams, and hover-to-preview / click-to-pin artifact drawer
+
+When an evaluation, incident postmortem, or ADR compares versions or walks through multi-turn execution traces:
+
+- **Left-event / right-annotation trace stream (`.trace-stream` / `.turn-row`)**: Show the observed event, tool call, or dialog turn on the left (`1.35fr`) and the causal annotation on the right (`.turn-note`, `1fr`), marking pass/fail turns with `.turn-pass` / `.turn-fail`. Pair with `.score-strip` / `.score-pill` for top-level KPI strips.
+- **Unified & word-highlighted diffs (`.diff-box`)**: Render version changes with `.diff-header`, `.diff-hunk`, `.diff-add`, `.diff-del`, `.diff-ctx`, `.diff-word-add`, and `.diff-word-del` (already included in `assets/report-theme.css`).
+- **Default-collapsed details + declarative floating drawer (`.explorer-float-drawer`)**: Keep bulky raw artifacts inside a collapsed `<details id="art-...">` block or `<dl>` entry in the main document flow so offline/no-JS readers still have full access. Add compact `.jump-pill` anchors with `href="#art-..."` and `data-drawer-target="art-..."` (plus optional `data-drawer-title="..."` and `data-drawer-wide="true"`) on matrix rows or score cards. `assets/report-navigation.js` automatically handles hover-to-preview (`预览模式`), click-to-pin (`已固定`), `定位原文`, and `Escape` close at `right: 20px; bottom: 20px` (opposite the bottom-left TOC). Never add UI tutorial prose explaining how hover/pin works.
 
 ## Implementation scope
 

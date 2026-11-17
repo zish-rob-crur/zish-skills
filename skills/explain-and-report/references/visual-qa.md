@@ -70,10 +70,10 @@ When the user explicitly defers visual acceptance, leave these checks **not run�
 
 For reports with the shared outline, also check reading navigation:
 
-- At the start, middle, and end of `main`, verify progress and the current-section marker against the visible content. Progress reaches 100% when the article's end is visible; footer space does not extend it. Opening the floating directory must not change progress or the active section. Check an article that fits in one viewport too.
-- Open a section deep link, follow outline links, and resize across the sidebar breakpoint. Headings must remain visible with the same top inset whether the floating directory is open or closed. Check collapse after a link or outside tap, and keyboard focus including Escape.
-- On narrow screens, check the compact entry near the bottom safe area and the panel opening above it. The panel must scroll to its last link without page overflow; final article text and links must scroll clear of the entry. The percentage must not intercept the directory button's pointer input.
-- Disable JS: static outline links and the entire article remain usable, without a false progress value. Check layout changes after figures load or details expand. Inspect the rail alongside the densest figure so navigation does not reduce labels below readable size.
+- At the start, middle, and end of `main`, verify progress and the current-section marker against the visible content. Progress reaches 100% when the article's end is visible; footer space does not extend it. Hovering or pinning the bottom-left floating directory must not change progress or the active section. Check an article that fits in one viewport too.
+- Check the compact bottom-left floating pill (`left: 24px; bottom: 24px` on desktop, `16px` on narrow screens) and its panel opening upward above it. Verify hover-to-preview, click-to-pin on `目录` (`data-toc-pinned="true"`), outside tap unpin/close, and keyboard focus including `Escape` restoring focus to `summary`. Headings must remain visible with the same top inset whether the directory is open or closed.
+- The upward panel must scroll to its last link without page overflow; final article text and footer links must scroll clear above the pill. The percentage must not intercept the directory summary's pointer input.
+- Disable JS: static outline links remain inline above `main` and the entire article stays usable, without a false progress value. Check layout changes after figures load or details expand. Verify zero meta-commentary or UI tutorial text (`"悬浮目录"`, `"一句话怎么讲"`, `"鼠标悬停即可弹出预览"`) leaked into visible prose, labels, or captions.
 
 `node --test <skill-dir>/tests/test_navigation.cjs` checks navigation calculations and controller behavior with DOM doubles. It does not establish real scrolling, focus, sticky layout, or visual acceptance.
 

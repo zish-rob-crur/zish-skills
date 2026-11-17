@@ -12,41 +12,108 @@ test('progress uses the article boundaries, including deep entry, its end, and s
 });
 
 // These doubles run the shipped controller and its events, without claiming rendered QA.
-function mount({wide = false, scroll = 0, invalid = false, observer = true} = {}) {
-  const pending = [], listeners = new Map(), observed = [];
-  let resizeCallback;
+function mount({scroll = 0, innerWidth = 1440, invalid = false, observer = true, withExtras = false} = {}) {
+  const pending = [], listeners = new Map(), observed = [], timers = new Map();
+  let timerId = 0, resizeCallback;
   const document = {
     activeElement:null, listeners:new Map(),
     addEventListener(name,handler) { this.listeners.set(name,handler); },
-    documentElement:{style:{values:{},setProperty(k,v){this.values[k]=v;}}}
+    documentElement:{
+      attributes:{},
+      style:{values:{},setProperty(k,v){this.values[k]=v;}},
+      setAttribute(k,v){this.attributes[k]=v;},
+      getAttribute(k){return this.attributes[k];},
+      removeAttribute(k){delete this.attributes[k];}
+    }
   };
   const window = {
-    innerHeight:800, scroll,
+    innerHeight:800, innerWidth, scroll,
     addEventListener(name, handler) { listeners.set(name, handler); },
-    requestAnimationFrame(handler) { pending.push(handler); }
+    requestAnimationFrame(handler) { pending.push(handler); },
+    setTimeout(handler) { const id = ++timerId; timers.set(id, handler); return id; },
+    clearTimeout(id) { timers.delete(id); }
   };
-  function element() {
+  function element(tagName = 'DIV') {
+    const classSet = new Set();
     return {
-      listeners:new Map(), attributes:{}, children:[], hidden:false,
+      tagName, textContent:'', className:'', style:{},
+      listeners:new Map(), attributes:{}, children:[], hidden:false, open:false,
+      classList:{
+        add(c){classSet.add(c);},
+        remove(c){classSet.delete(c);},
+        contains(c){return classSet.has(c);},
+        toggle(c, force){const on = force === undefined ? !classSet.has(c) : Boolean(force); if(on) classSet.add(c); else classSet.delete(c); return on;}
+      },
       addEventListener(name,handler) { this.listeners.set(name,handler); },
       setAttribute(name,value) { this.attributes[name]=value; },
       removeAttribute(name) { delete this.attributes[name]; },
       getAttribute(name) { return this.attributes[name]; },
-      contains(child) { return this===child || this.children.some(node=>node.contains(child)); },
+      appendChild(child) { this.children.push(child); return child; },
+      replaceChildren(...children) { this.children = children; },
+      cloneNode(deep) {
+        const copy = element(this.tagName);
+        copy.textContent = this.textContent;
+        copy.className = this.className;
+        copy.open = this.open;
+        copy.attributes = {...this.attributes};
+        if (deep) copy.children = this.children.map(ch => ch.cloneNode ? ch.cloneNode(true) : ch);
+        return copy;
+      },
+      contains(child) { return this===child || this.children.some(node=>node.contains && node.contains(child)); },
       focus() { document.activeElement=this; },
       closest(name) { return name==='a' && this.isLink ? this : null; }
     };
   }
   const outline=element(), nav=element(), summary=element(), rail=element(), progress=element(), value=element(), bar=element(), main=element(), report=element();
+  const themeToggle = withExtras ? element('BUTTON') : null;
+  const citeLink = withExtras ? element('A') : null;
+  const tipNode = withExtras ? element('SPAN') : null;
+  const drawerTrigger = withExtras ? element('A') : null;
+  const drawerDetails = withExtras ? element('DETAILS') : null;
+  const dt = withExtras ? element('DT') : null;
+  const dd = withExtras ? element('DD') : null;
+  if (withExtras) {
+    document.body = element('BODY');
+    document.createElement = tag => element(tag.toUpperCase());
+    citeLink.isLink = true;
+    citeLink.attributes.href = '#C1';
+    citeLink.getBoundingClientRect = () => ({top: 200, left: 120, height: 20});
+    tipNode.attributes['data-tip-title'] = 'Stage 1';
+    tipNode.attributes['data-tip-body'] = 'Milestone note.';
+    tipNode.getBoundingClientRect = () => ({top: 300, left: 200, height: 24});
+    drawerTrigger.isLink = true;
+    drawerTrigger.attributes.href = '#art-detail';
+    drawerTrigger.attributes['data-drawer-target'] = 'art-detail';
+    drawerTrigger.attributes['data-drawer-title'] = 'Detail Spec';
+    drawerTrigger.attributes['data-drawer-wide'] = 'true';
+    drawerDetails.attributes.id = 'art-detail';
+    drawerDetails.open = false;
+    const innerSpan = element('SPAN');
+    innerSpan.attributes.id = 'nested-id';
+    innerSpan.textContent = 'Spec body';
+    drawerDetails.children = [innerSpan];
+    dt.textContent = 'C1';
+    const code = element('CODE'); code.textContent = 'spec.txt';
+    const para = element('P'); para.textContent = 'Requirement details.';
+    dd.querySelector = sel => sel === 'code' ? code : null;
+    dd.querySelectorAll = sel => sel === 'p' ? [para] : [];
+    dt.nextElementSibling = dd;
+    main.querySelectorAll = sel => {
+      if (sel === 'a[href^="#"]') return [citeLink];
+      if (sel === '[data-tip-title]') return [tipNode];
+      return [];
+    };
+    report.querySelectorAll = sel => sel === '[data-drawer-target]' ? [drawerTrigger] : [];
+  }
   outline.open=true; outline.children=[summary,nav];
   rail.children=[outline,progress]; progress.children=[value,bar];
   progress.hidden=true;
   progress.querySelector = selector => ({'[data-reading-value]':value,'[data-reading-bar]':bar})[selector];
   rail.querySelector = selector => selector==='[data-reading-progress]' ? progress : null;
-  rail.getBoundingClientRect = () => ({height:outline.open ? 180 : 48});
+  rail.getBoundingClientRect = () => ({height:outline.open ? 180 : 44});
   outline.querySelector = selector => ({nav,summary})[selector];
   report.classList = {values:new Set(),add(name){this.values.add(name);},contains(name){return this.values.has(name);}};
-  report.querySelector = selector => ({'main#main':main,'.reading-rail':rail,'details.report-outline':outline})[selector];
+  report.querySelector = selector => ({'main#main':main,'.reading-rail':rail,'details.report-outline':outline,'[data-theme-toggle]':themeToggle})[selector];
   document.querySelector = selector => selector==='.report' ? report : null;
   const sections=[300,1000,1800].map((top,index) => {
     const node=element(); node.top=top;node.visible=true;node.order=index;
@@ -64,28 +131,32 @@ function mount({wide = false, scroll = 0, invalid = false, observer = true} = {}
   // Deliberately reverse the menu order: active tracking must follow document order.
   nav.children=links;
   nav.querySelectorAll=()=>[...links].reverse();
-  document.getElementById=id=>invalid ? null : sections[Number(id.replace('part-',''))] || null;
-  const media={matches:wide,addEventListener(name,handler){this.change=handler;}};
-  window.matchMedia=query=>{assert.equal(query,'(min-width: 1440px)');return media;};
+  document.getElementById=id=>{
+    if (invalid) return null;
+    if (withExtras && id === 'C1') return dt;
+    if (withExtras && id === 'art-detail') return drawerDetails;
+    return sections[Number(id.replace('part-',''))] || null;
+  };
   if (observer) window.ResizeObserver=class {
     constructor(callback){resizeCallback=callback;}
     observe(node){observed.push(node);}
   };
   const mounted=initReadingNavigation(document,window);
   function flush() { for (const task of pending.splice(0)) task(); }
+  function runTimers() { for (const [id, fn] of [...timers.entries()]) { timers.delete(id); fn(); } }
   function event(target,name,data={}) {
     const e={target,defaultPrevented:false,preventDefault(){this.defaultPrevented=true;},...data};
     target.listeners.get(name)(e);return e;
   }
-  return {document,window,report,outline,nav,summary,rail,progress,value,bar,main,links,sections,media,pending,observed,mounted,flush,event,
+  return {document,window,report,outline,nav,summary,rail,progress,value,bar,main,links,sections,pending,timers,observed,mounted,themeToggle,citeLink,tipNode,drawerTrigger,drawerDetails,flush,runTimers,event,
     fire(name){listeners.get(name)();},resizeContent(){resizeCallback();},
-    setWide(matches){media.matches=matches;media.change();},
     offset(){return document.documentElement.style.values['--reading-offset'];}};
 }
 
-test('valid markup is enhanced once; malformed targets leave the static fallback intact', () => {
+test('valid markup initializes as collapsed bottom-left floating TOC; malformed targets leave static fallback intact', () => {
   const ui=mount();
   assert.equal(ui.mounted,true);assert.equal(ui.progress.hidden,false);assert.equal(ui.outline.open,false);
+  assert.equal(ui.rail.getAttribute('data-toc-pinned'),undefined);
   assert.equal(ui.report.classList.contains('navigation-ready'),true);
   assert.equal(ui.offset(),'24px');assert.equal(ui.bar.value,0);assert.equal(ui.value.textContent,'0%');
   assert.equal(initReadingNavigation(ui.document,ui.window),false);
@@ -95,7 +166,7 @@ test('valid markup is enhanced once; malformed targets leave the static fallback
 });
 
 test('scroll is frame-throttled, highlights the current section, and reaches 100 before the footer', () => {
-  const ui=mount({wide:true});ui.flush();
+  const ui=mount();ui.flush();
   ui.window.scroll=1000;
   ui.fire('scroll');ui.fire('scroll');ui.fire('scroll');assert.equal(ui.pending.length,1);
   ui.flush();
@@ -108,7 +179,7 @@ test('scroll is frame-throttled, highlights the current section, and reaches 100
 });
 
 test('deep entry, history restoration, resize and content reflow update progress without changing focus', () => {
-  const ui=mount({wide:true,scroll:688});ui.flush();
+  const ui=mount({scroll:688});ui.flush();
   assert.equal(ui.value.textContent,'50%');assert.equal(ui.links[0].attributes['aria-current'],'location');
   assert.deepEqual(ui.observed,[ui.main,ui.rail]);
   ui.main.height=3000;ui.resizeContent();ui.flush();assert.equal(ui.value.textContent,'28%');
@@ -117,49 +188,158 @@ test('deep entry, history restoration, resize and content reflow update progress
   assert.equal(ui.document.activeElement,null);
 });
 
-test('responsive menu preserves native links and a stable inset, and Escape restores summary focus', () => {
-  const ui=mount({wide:true});assert.equal(ui.outline.open,true);assert.equal(ui.offset(),'24px');
-  ui.setWide(false);assert.equal(ui.outline.open,false);assert.equal(ui.offset(),'24px');
-  ui.outline.open=true;ui.event(ui.outline,'toggle');ui.flush();assert.equal(ui.offset(),'24px');
+test('floating TOC supports hover-to-preview, click-to-pin, link navigation, and Escape focus restore', () => {
+  const ui=mount();ui.flush();
+  assert.equal(ui.outline.open,false);
+
+  // Hover opens preview; leaving schedules close unless re-entered
+  ui.event(ui.rail,'mouseenter');
+  assert.equal(ui.outline.open,true);
+  assert.equal(ui.rail.getAttribute('data-toc-pinned'),undefined);
+  ui.event(ui.rail,'mouseleave');
+  assert.equal(ui.timers.size,1);
+  ui.event(ui.rail,'mouseenter');
+  assert.equal(ui.timers.size,0);
+  assert.equal(ui.outline.open,true);
+
+  // Clicking a link while unpinned closes preview without preventing hash navigation
   const click=ui.event(ui.nav,'click',{target:ui.links[1],button:0});
-  assert.equal(click.defaultPrevented,false);assert.equal(ui.outline.open,false);assert.equal(ui.offset(),'24px');
-  ui.outline.open=true;
-  ui.event(ui.nav,'click',{target:ui.links[1],ctrlKey:true,button:0});assert.equal(ui.outline.open,true);
+  assert.equal(click.defaultPrevented,false);
+  assert.equal(ui.outline.open,false);
+
+  // Hover then click summary pins it open across mouseleave and desktop link clicks
+  ui.event(ui.rail,'mouseenter');
+  const pinClick=ui.event(ui.summary,'click');
+  assert.equal(pinClick.defaultPrevented,true);
+  assert.equal(ui.outline.open,true);
+  assert.equal(ui.rail.getAttribute('data-toc-pinned'),'true');
+  ui.event(ui.rail,'mouseleave');
+  ui.runTimers();
+  assert.equal(ui.outline.open,true);
+  ui.event(ui.nav,'click',{target:ui.links[1],button:0});
+  assert.equal(ui.outline.open,true);
+
+  // On narrow screens (<760px), clicking a link closes even if previously opened via summary tap
+  ui.window.innerWidth=390;
+  ui.event(ui.nav,'click',{target:ui.links[1],button:0});
+  assert.equal(ui.outline.open,false);
+  assert.equal(ui.rail.getAttribute('data-toc-pinned'),undefined);
+
+  // Escape unpins, closes, and restores focus to summary
+  ui.window.innerWidth=1440;
+  ui.event(ui.summary,'click');
+  assert.equal(ui.outline.open,true);
   ui.document.activeElement=ui.links[1];
   const escape=ui.event(ui.outline,'keydown',{key:'Escape'});
-  assert.equal(escape.defaultPrevented,true);assert.equal(ui.outline.open,false);assert.equal(ui.document.activeElement,ui.summary);
-  ui.setWide(true);assert.equal(ui.outline.open,true);assert.equal(ui.offset(),'24px');
+  assert.equal(escape.defaultPrevented,true);
+  assert.equal(ui.outline.open,false);
+  assert.equal(ui.rail.getAttribute('data-toc-pinned'),undefined);
+  assert.equal(ui.document.activeElement,ui.summary);
 });
 
 test('opening the floating directory does not change reading progress or the active section', () => {
   const ui=mount({scroll:688});ui.flush();
   const initial={progress:ui.bar.value, active:ui.links.map(link=>link.attributes['aria-current'])};
   assert.equal(initial.progress,50);
-  ui.outline.open=true;ui.event(ui.outline,'toggle');ui.flush();
+  ui.event(ui.rail,'mouseenter');ui.flush();
   assert.equal(ui.offset(),'24px');
   assert.deepEqual({progress:ui.bar.value,active:ui.links.map(link=>link.attributes['aria-current'])},initial);
   ui.resizeContent();ui.flush();
   assert.equal(ui.bar.value,initial.progress);
-  ui.outline.open=false;ui.event(ui.outline,'toggle');ui.flush();
+  ui.event(ui.rail,'mouseleave');ui.runTimers();ui.flush();
   assert.deepEqual({progress:ui.bar.value,active:ui.links.map(link=>link.attributes['aria-current'])},initial);
 });
 
-test('outside pointer closes only the floating directory without stealing focus or blocking the pointer', () => {
-  const ui=mount({scroll:688});ui.flush();ui.outline.open=true;
+test('outside pointer unpins and closes floating directory without stealing focus or blocking pointer', () => {
+  const ui=mount({scroll:688});ui.flush();
+  ui.event(ui.summary,'click');
+  assert.equal(ui.outline.open,true);
+  assert.equal(ui.rail.getAttribute('data-toc-pinned'),'true');
   ui.event(ui.document,'pointerdown',{target:ui.summary});assert.equal(ui.outline.open,true);
   ui.event(ui.document,'pointerdown',{target:ui.bar});assert.equal(ui.outline.open,true);
   ui.document.activeElement=ui.sections[0];
   const outside=ui.event(ui.document,'pointerdown',{target:ui.main});
   assert.equal(outside.defaultPrevented,false);assert.equal(ui.outline.open,false);
+  assert.equal(ui.rail.getAttribute('data-toc-pinned'),undefined);
   assert.equal(ui.document.activeElement,ui.sections[0]);assert.equal(ui.bar.value,50);
-  ui.setWide(true);
-  ui.event(ui.document,'pointerdown',{target:ui.main});assert.equal(ui.outline.open,true);
 });
 
 test('hidden targets are not highlighted and ordinary resize works without ResizeObserver', () => {
-  const ui=mount({wide:true,scroll:1000,observer:false});ui.flush();
+  const ui=mount({scroll:1000,observer:false});ui.flush();
   assert.equal(ui.links[1].attributes['aria-current'],'location');
   ui.sections[1].visible=false;ui.fire('resize');ui.flush();
   assert.equal(ui.links[0].attributes['aria-current'],'location');
   assert.equal(ui.links[1].attributes['aria-current'],undefined);
+});
+
+test('theme toggle, citation popovers, and data-tip-title popovers enhance reading cleanly', () => {
+  const ui=mount({withExtras:true});ui.flush();
+  assert.equal(ui.themeToggle.getAttribute('aria-pressed'), 'false');
+  ui.event(ui.themeToggle, 'click');
+  assert.equal(ui.document.documentElement.getAttribute('data-theme'), 'light');
+  assert.equal(ui.themeToggle.getAttribute('aria-pressed'), 'true');
+  ui.event(ui.themeToggle, 'click');
+  assert.equal(ui.document.documentElement.getAttribute('data-theme'), undefined);
+
+  const popover = ui.document.body.children[0];
+  assert.equal(popover.hidden, true);
+  ui.event(ui.citeLink, 'mouseenter');
+  assert.equal(popover.hidden, false);
+  assert.equal(popover.children[0].textContent, '证据 C1 · spec.txt');
+  assert.equal(popover.children[1].textContent, 'Requirement details.');
+  ui.event(ui.citeLink, 'mouseleave');
+  assert.equal(popover.hidden, true);
+
+  ui.event(ui.tipNode, 'focus');
+  assert.equal(popover.hidden, false);
+  assert.equal(popover.children[0].textContent, 'Stage 1');
+  assert.equal(popover.children[1].textContent, 'Milestone note.');
+  ui.event(ui.tipNode, 'blur');
+  assert.equal(popover.hidden, true);
+});
+
+test('floating detail drawer supports hover-to-preview, click-to-pin toggle, id stripping, and Escape close', () => {
+  const ui=mount({withExtras:true});ui.flush();
+  const drawer = ui.document.body.children[1];
+  assert.equal(drawer.className, 'explorer-float-drawer');
+  assert.equal(drawer.hidden, true);
+
+  // Hover opens in preview mode; leaving schedules close
+  ui.event(ui.drawerTrigger, 'mouseenter');
+  assert.equal(drawer.hidden, false);
+  assert.equal(drawer.classList.contains('is-compare-mode'), true);
+  assert.equal(drawer.classList.contains('is-pinned'), false);
+  const bar = drawer.children[0];
+  const badge = bar.children[0].children[0];
+  const titleEl = bar.children[0].children[1];
+  const body = drawer.children[1];
+  assert.equal(badge.textContent, '预览模式');
+  assert.equal(titleEl.textContent, 'Detail Spec');
+  const clonedDetails = body.children[0];
+  assert.equal(clonedDetails.open, true);
+  assert.equal(clonedDetails.getAttribute('id'), undefined);
+  assert.equal(clonedDetails.children[0].getAttribute('id'), undefined);
+
+  ui.event(ui.drawerTrigger, 'mouseleave');
+  ui.runTimers();
+  assert.equal(drawer.hidden, true);
+
+  // First click pins; second click on same trigger closes & unpins
+  const click1 = ui.event(ui.drawerTrigger, 'click', {button:0});
+  assert.equal(click1.defaultPrevented, true);
+  assert.equal(drawer.hidden, false);
+  assert.equal(drawer.classList.contains('is-pinned'), true);
+  assert.equal(badge.textContent, '已固定');
+  assert.equal(ui.drawerTrigger.classList.contains('is-active-pill'), true);
+
+  ui.event(ui.drawerTrigger, 'click', {button:0});
+  assert.equal(drawer.hidden, true);
+  assert.equal(ui.drawerTrigger.classList.contains('is-active-pill'), false);
+
+  // Re-open pinned and close via Escape
+  ui.event(ui.drawerTrigger, 'click', {button:0});
+  assert.equal(drawer.hidden, false);
+  ui.event(ui.document, 'keydown', {key:'Escape'});
+  assert.equal(drawer.hidden, true);
+  assert.equal(drawer.classList.contains('is-pinned'), false);
 });
