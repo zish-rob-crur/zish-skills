@@ -12,7 +12,6 @@ A collection of reusable skills I use with coding agents and AI workflows.
 | `review-with-judgment` | Review multi-commit MRs/PRs, code changes, ADRs, and agent architectures for correctness, reuse, over-engineering, and long-term maintainability. |
 | `think-with-me` | Help users reason through project and ADR decisions using repo evidence, their priorities, and explicit tradeoffs. |
 | `tmux-peer-agent` | Hand a design review or a coding task to Codex, Claude Code, or Antigravity CLI in a visible tmux pane and get the result back. |
-| `zish-skill-manager` | Manage personal, public, private, company, and customer-specific Codex skills without leaking private material into this public repo. |
 
 ## Install From Remote With `npx skills`
 
@@ -39,7 +38,6 @@ npx skills add https://github.com/zish-rob-crur/zish-skills --skill handoff --ag
 npx skills add https://github.com/zish-rob-crur/zish-skills --skill review-with-judgment --agent codex --global
 npx skills add https://github.com/zish-rob-crur/zish-skills --skill think-with-me --agent codex --global
 npx skills add https://github.com/zish-rob-crur/zish-skills --skill tmux-peer-agent --agent codex --global
-npx skills add https://github.com/zish-rob-crur/zish-skills --skill zish-skill-manager --agent codex --global
 ```
 
 Install into the current project instead of the global agent directory by omitting `--global`:
@@ -57,5 +55,5 @@ npx skills add zish-rob-crur/zish-skills --skill handoff --agent codex --global
 Update installed skills later:
 
 ```bash
-npx skills update analyze-open-source-repo explain-and-report handoff review-with-judgment think-with-me tmux-peer-agent zish-skill-manager --global
+npx skills update analyze-open-source-repo explain-and-report handoff review-with-judgment think-with-me tmux-peer-agent --global
 ```
