@@ -10,7 +10,7 @@ A collection of reusable skills I use with coding agents and AI workflows.
 | `explain-and-report` | Explain complex systems with diagrams, interactive walkthroughs, and HTML reports, with optional Feishu publishing. |
 | `handoff` | Create concise Markdown handoffs for Coding Agent work, blockers, reviews, escalations, or context transfers, with an optional zip bundle of the referenced code. |
 | `review-with-judgment` | Review multi-commit MRs/PRs, code changes, ADRs, and agent architectures for correctness, reuse, over-engineering, and long-term maintainability. |
-| `think-with-me` | Help users reason through project and ADR decisions using repo evidence, their priorities, and explicit tradeoffs. |
+| `think-with-me` | Clarify product and technical problems into ordered topics, discuss and decide one topic at a time, and sync a live decision document. |
 | `tmux-peer-agent` | Hand a design review or a coding task to Codex, Claude Code, or Antigravity CLI in a visible tmux pane and get the result back. |
 
 ## Install From Remote With `npx skills`

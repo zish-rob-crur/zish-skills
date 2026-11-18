@@ -1,73 +1,48 @@
-# 记录示例
+# Interaction Examples
 
-以下项目路径、符号、代码和测试事实、对话及决定均为虚构示例，用于说明协作和记录方式，不可引用为真实项目证据。
+All cases below are synthetic calibration scenarios. Apply the workflow to fresh evidence in each session; never cite these examples as facts about the current repository.
 
-## 用户仍在构思
+## 1. Frame the Problem With Appetite and an Eigenquestion (Turn 1)
 
-用户：“我偏向让伙伴交一个目标，然后由我们持续做，但还没想定。因为不想让他们维护整套跟进状态。”
+**Scenario:** The user opens with "I want to add an approval workflow toggle to our agent runner."
 
-写入“我的想法”：用户倾向让伙伴提交目标，由本系统持续执行；希望减少伙伴维护跟进状态的负担。
+**Response:** Inspect existing runner and permission code (`src/runner/execute.ts`, `src/policy/rules.ts`) first, skip sycophantic praise, and establish appetite, baseline, and the root Eigenquestion before designing toggles:
 
-当前判断：有倾向，尚未定案。
+- Reframe problem and appetite: verify what operator incident triggered the ask, establish how much budget it merits (e.g., 1-week v1 appetite), and note a low-cost baseline (existing per-tool allowlists in `src/policy/rules.ts` already block unapproved external calls without building a queue).
+- Lead `docs/thinking/2026-11-17-approval-flow.md` with the root Eigenquestion (`T1`): "Must v1 halt before an action runs, or only audit actions afterward?" Explain that pre-run halting drives `T2` (approver routing and timeouts) and `T3` (entry flow), whereas post-hoc audit eliminates `T2`.
+- Show `Decided: none | Current: T1 | Queued: T2, T3` and ask one open question on `T1` without pushing a toggle design.
 
-可继续的问题：“如果对方中途修改目标，你希望它能直接改变哪些部分？”只在与当前议题相关时问，不直接替用户选一套状态机。
+## 2. Run a Tiger Check, Prune Topics, and Breadboard Next Flow
 
-## 用户明确选择，但尚未给理由
+**Scenario:** On `T1`, the user confirms the 1-week appetite and says "v1 only needs post-hoc audit; operators shouldn't block mid-run."
 
-用户：“首版只开放查询结果，先就这样定。”
+**Response:** Check the repo (`src/events/audit.ts` already records tool calls) and run a pre-mortem separating real **Tigers / Rabbit Holes** from harmless **Paper Tigers**:
 
-当前判断：已决定——首版只开放查询结果。决定者：用户。理由：待补充。
+- **Tiger / Rabbit Hole:** External webhooks in `src/tools/notify.ts` cannot be rolled back once sent—if a bad rule fires twice, post-hoc audit spots it after customer impact. Ignore harmless paper tigers such as 50ms async log lag. Ask if webhook allowlists cover this risk for v1.
+- **Outcome:** User confirms allowlists guard webhooks and locks `T1` (`Decided`, User). Prune `T2` (`Pruned — post-hoc audit removes approver routing and timeout queue`), sync `docs/thinking/2026-11-17-approval-flow.md`, and open `T3` with a 3-line text **breadboard**: `Runner Config -> Enable audit flag -> Audit Log Page shows tool + caller`.
 
-不要写“为了降低风险/缩短工期”，除非用户真的给出了这个理由。可以简洁询问促成选择的原因，也可以先处理用户接着提出的其他内容。
+## 3. Compare Options With Shared Criteria and Transparent Agent Leaning
 
-## 用户改变决定
+**Scenario:** On `T3` (export delivery), `src/exports/api.ts::createExport` cancels work when the HTTP connection drops (`tests/exports/disconnect.test.ts`), and the user asks what options exist while prioritizing reliability over fewer client requests.
 
-原记录：用户选择同步返回完整结果，理由是希望伙伴调用简单。
+**Response:** Compare distinct directions against the user's priority (`survives disconnect`) and simplicity preference (`single client path in v1`):
 
-新回复：“实测任务要等几分钟，改成先返回任务标识再查结果。调用多一步可以接受。”
+| Direction | Survives Disconnect | Single Client Path | Key Cost or Unknown |
+| --- | --- | --- | --- |
+| Persist job + unified status polling | Yes (detached from request) | Yes (one polling flow) | Client adds polling loop |
+| Sync wait + fallback status check | Yes (via fallback) | No (two client code paths) | Extra client branching |
 
-更新正文为新选择；保留变化记录：“用户将同步返回完整结果改为返回任务标识后查询；依据是实际耗时达到几分钟；接受增加结果查询步骤。原选择重视调用简单。”不要删除原来为何选同步的记录。
+- **Agent leaning:** Given your preference for reliability over request count and a single v1 retrieval path, unified polling fits better and avoids maintaining two client read paths. Whether `src/workers/jobs.ts` recovers jobs across worker restarts remains unverified.
+- **Record cleanly:** When the user accepts polling, log `Decided` under User with the stated rationale and accepted client polling cost, plus a separate open check on worker restart recovery. Never fold unaccepted caveats into user rationale.
 
-## 用户委托一项决定
+## 4. Revise a Settled Topic Without Losing History
 
-用户：“文档目录你按项目习惯选就行。接口方案我自己想。”
+**Scenario:** A benchmark reveals exports run 4 minutes, invalidating an earlier preference for synchronous HTTP responses.
 
-Agent 自行选已有文档目录并保存；接口方案仍留给用户。不要把对路径的委托扩展成架构决策授权。常规整理选择无需进入关键决定日志。
+**Response:** Update the active decision to async job polling, record `Sync HTTP -> Persist job + polling; triggered by 4-minute runtime benchmark; user accepts extra poll step` in `Decision Log & Revisions` while keeping the original rationale visible, and re-check downstream error-handling topics that assumed synchronous HTTP status codes.
 
-## 完整对话：从证据到修正选择
+## 5. Work Without Target Repo Access
 
-用户：“首版导出同步返回文件吧，接入方调用一次就够了。”
+**Scenario:** The user asks to structure and think through a product outline when no workspace or repo is attached.
 
-Agent（示例中的 repo 调查）：“`src/exports/api.ts::createExport` 把请求中断信号传给导出函数；`tests/exports/disconnect.test.ts` 验证了断开连接会取消导出。这是当前实现的行为，生产中断连是否常见还不知道。若文件生成前连接断开，你希望任务怎样处理？”
-
-用户：“任务要继续完成。断连后仍能拿到结果最重要；首版只维护一种取结果方式，比少发请求重要。按这两点比较一下。”
-
-Agent：“在任务持久化、脱离请求连接执行的共同前提下，可以同步等待、断连后补查，也可以立即返回标识、统一查询。两者都要管理任务状态；前者正常完成时直接取得结果，但要处理直接返回与补查两种路径，后者统一查询，但接入方要增加查询逻辑。worker 重启后能否恢复任务还未验证。”
-
-用户：“那改成先保存任务、返回标识，再统一查询结果；首版不保留同步等待。接入方增加查询、后端维护任务状态，我都接受。重启恢复先验证，若恢复测试失败，就重新评估任务执行方式。”
-
-写回同一文档，只记录实际形成的判断：
-
-- `<讨论日期> · T1 · 用户 · 已决定`：首版先保存导出任务、返回标识，再统一查询结果；不保留同步等待路径。
-- 理由与比较标准：断连后仍可取得结果优先；只维护一种取结果方式比减少请求更重要。
-- 用户接受的代价：接入方增加查询逻辑，后端维护任务状态。
-- 待验证假设：所选执行机制能在 worker 重启后恢复任务。恢复测试失败时重评执行方式；未验证的能力不写成已有事实。
-- 变化：同步直接返回 → 提交任务后统一查询；用户根据断连取消的证据及上述优先级修正选择。保留原先重视调用简单的理由。
-
-这里确认的是方案选择，未声称代码已经实现；不额外补写用户未接受的成本或实施计划。
-
-## 检查后保留原选择
-
-用户：“首版仍用查询结果，不做完成回调。”
-
-Agent：“示例 `docs/integrations.md::首批接入方` 说明这些调用方不能接收外部回调；示例 `src/exports/status.ts::getStatus` 已返回完成或失败状态。若调用方停查，获知结果就会延后；首版能接受这一点吗？”
-
-用户：“能。首版不要求实时通知，查询方案保留。我接受停查期间不能及时知道结果；有需要主动通知的接入方时再讨论回调。”
-
-记录：用户维持查询方案，理由是首版不要求实时通知；接受停查期间获知结果延后。回调暂缓，出现需要主动通知的接入方时重评。有效检查可以支持保留选择，不必为体现挑战而制造改动。
-
-## 没有 repo 可读
-
-用户要求把大纲整理成文档，当前没有目标项目工作目录。
-
-先写有用的思考初稿，注明“依据用户大纲，repo 实现待核实”，把具体调查点与其影响的问题列清楚。说明实际保存位置；给出的 repo 路径只是建议，不冒充已经完成的项目写入。
+**Response:** Create the portable thinking document locally (or in chat if read-only), mark `Evidence Scope: No repo access — code facts unverified`, track concrete codebase checks under `Open Verifications`, and continue the topic-by-topic loop without inventing file paths or symbol contracts.

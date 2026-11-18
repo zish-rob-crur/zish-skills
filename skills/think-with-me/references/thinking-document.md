@@ -1,85 +1,61 @@
-# 思考文档模板
+# Thinking Document Template
 
-用户要求创建或继续文档时使用本模板；只有模糊想法、尚无保存意图的聊天，可以先澄清中心问题。沿用目标 repo 的位置和格式；没有惯例时使用 docs/thinking/YYYY-MM-DD-<topic>.md。选择 Markdown 便于编辑、diff 和续写。
+Create or resume this Markdown file on Turn 1 once the problem frame and topic map are clear, unless the user requests chat-only mode or the workspace is read-only. Follow user-specified paths or repo conventions first; otherwise write `docs/thinking/YYYY-MM-DD-<topic>.md` in the user's timezone.
 
-先用用户已提供的内容填写；“我的想法”保留给用户，也可以由 agent 忠实记录用户在聊天中说出的内容。移除模板说明与无用占位符。下面先给轻量正文，再给按进展取用的片段；不要整份复制，也不要求用户填完表单。
-
----
-
-# <主题>：思考与选择
-
-状态：思考中 · 创建：<日期> · 更新：<日期>
-
-## 这次想清楚什么
-
-<用两三句话写目标、讨论范围和已有约束。准备比较或作决定时，明确要确定的行为、责任或边界，以及本轮暂不决定的部分。区分用户要求与 agent 的理解。>
-
-依据：<实际查看的 repo/commit/文档，或“仅依据用户提供的大纲，代码事实待核实”。不要伪造已查证信息。>
-
-## 议题
-
-### T1 · <一个具体问题>
-
-**为什么值得想：**<它影响什么结果或取舍。>
-
-**已知与待查：**<一至三条必要事实与未知，附实际来源。>
-
-**先想一想：**<一个开放问题。必要时补一个有帮助的情境，不抢先填答案。>
-
-**我的想法：**待填写。
-
-**当前判断：**待思考；选择与理由待记录。
-
-### T2 · <另一个具体问题>
-
-<复用必要结构。已有大纲时先形成议题全貌；只在需要比较时，按共同标准加入少数具体方向。>
-
-## 决定与变化
-
-尚未记录已确认的决定。
-
-<实际发生后记录“日期 · 议题 · 谁选择了什么 · 实际理由”；改变决定时保留“原选择 → 新选择；原因或新证据”，同步正文。只记录关键选择和实质变化，不复制逐句聊天。没有决定或变化时可省略本节。>
-
-## 待查与暂存
-
-- <待查事实或最小验证，说明它影响哪个判断。由 agent 查资料能回答的，不反复问用户。>
-- <如有旁支，说明何时值得重新讨论。没有则删除。>
-
-## 依据
-
-<仅列确实读过的文件、符号、文档或原始来源链接。已在正文充分引用时可省略本节。>
+Write generated headings, labels, and prose in the user's language (Simplified Chinese by default). Keep the document scannable: fill known context right away, omit blocks that do not apply yet, and never dump blank form fields.
 
 ---
 
-## 按讨论进展取用的片段
+# <Topic Title>: Product & Technical Thinking
 
-以下片段放进相关议题即可，不新增必填阶段；已有内容不重复写。每轮只增加推动当前判断所需的内容。
+Status: Active · Created: YYYY-MM-DD · Updated: YYYY-MM-DD · Progress: Decided none | Active T1 | Queued T2, T3
 
-### 用户提出构想后：检验一个关键点
+## Problem & Boundary
 
-**这次要决定：**<具体行为、责任或范围；已经明确时不重问。>
+- **Friction & Outcome:** Who hits what friction, when it happens, and what changes when solved.
+- **Constraints, Appetite & Non-Goals:** Time/complexity budget (*appetite*), fixed limits, explicit v1 exclusions, and reversibility for key calls.
+- **Evidence Scope:** Inspected repo files/symbols, commit or doc dates, or `No repo access — code facts unverified`.
 
-**值得检验的点：**<来源显示什么，或哪项有依据但尚未验证的假设；它在何种场景下影响哪个目标。没有关键反证时不凑反例。>
+## Topic Map
 
-**接着想：**<一个真正需要用户判断的取舍问题。代码或资料能回答的先由 agent 查；用户已回答的直接记录。>
+Lead with the root Eigenquestion (`T1`); scale down to 1–2 rows for small reversible calls.
 
-### 需要比较时：沿用共同标准
-
-**比较依据：**<用户实际重视的目标与优先级、repo 的必要约束；区分硬条件与偏好，不擅自填权重。>
-
-| 方向 | <共同标准一> | <共同标准二，如有> | 关键代价或未知 |
+| ID | Topic | Depends On / Shapes | Status |
 | --- | --- | --- | --- |
-| <方向 A> | <事实或明确标注的推断> | <同左> | <需要承担或验证的内容> |
-| <方向 B，如有> | <使用同一标准> | <同左> | <同左> |
+| T1 | <Root Eigenquestion (product scope or core tradeoff)> | Resolves or prunes T2, T3 | Active |
+| T2 | <Workflow or state-rule question> | Depends on T1 | Queued |
+| T3 | <Edge-case or technical-boundary question> | Depends on T1, T2 | Pruned — superseded by T1 |
 
-方向数与标准数按实际需要调整；维持现状、暂缓或最小实验确有价值时才加入。机制能组合时明确其关系，不强行做单选题。
+## Topic Details
 
-### 形成关键选择后：写清理由、代价与重评条件
+### T1 · <Concrete Decision Question>
 
-- **当前选择：**<谁在何时作出什么选择、适用范围与状态。明确选择但未给理由时，仍是已决定，理由待补充。>
-- **理由与取舍：**<用户说出的理由、优先级与明确放弃的方向。>
-- **用户接受的主要代价：**<只记录用户明确接受的内容；Agent 发现的后果另标“Agent 判断/待确认”。>
-- **关键假设与证据：**<哪些已有依据，哪些待验证；方案已决定与能力待验证可以并存。>
-- **何时重新考虑：**<已明确的新证据、需求或代价变化；Agent 提议的条件标“待确认”，不编造数字阈值。>
+- **Why it matters & repo facts:** What downstream choice turns on T1; cite `path/to/file::symbol` or mark `Unverified`.
+- **Open question:** One focused question without a pre-filled answer.
+- **Breadboard (workflow topics, optional):** `Place -> User action -> System outcome` (3–5 lines; skip premature UI specs).
+- **User thinking:** Pending user input *(preserve user-authored edits across syncs)*.
 
-只保留与当前选择有关的条目；不把未讨论的理由或成本补成用户的意见，也不为补齐字段反复确认。检查支持原选择时，直接记录为何保留。
+<!-- Add only when stress-testing or comparing options -->
+- **Stress-test (Tiger / Rabbit Hole):** Single lethal pre-mortem scenario or hidden rabbit hole that could flip the choice (omit harmless paper tigers).
+- **Option comparison** *(keep criteria tied to user priorities and repo limits; note when options combine)*:
+
+| Direction | <Priority 1> | <Constraint 2> | Key Cost or Unknown |
+| --- | --- | --- | --- |
+| <Option A> | <Observed or labeled inference> | <Same> | <Tradeoff or open check> |
+| <Option B> | <Same> | <Same> | <Tradeoff or open check> |
+
+- **Agent leaning:** *Shown after objective tradeoffs when helpful — label clearly as Agent judgment and cite the driving priority or constraint.*
+
+<!-- Add once decided, needs verification, or deferred -->
+- **Decision:** <Status> · Owner: <User | Agent (delegated)> · Scope: <What is settled>
+- **Rationale & accepted tradeoffs:** Only reasons and costs the user accepted; write `Pending` if unstated. Mark extra agent-spotted risks as `Agent note (unconfirmed)`.
+- **Assumptions to verify & reopen trigger:** Specific runtime checks needed and what new evidence reverses this call.
+
+## Decision Log & Revisions
+
+- `YYYY-MM-DD · T1 · User · Decided`: <Short statement of choice and scope>. *(On revision: `Old -> New; trigger evidence; retain prior rationale`.)*
+
+## Open Verifications & Parked Ideas
+
+- **Verify:** <Check item and which topic it feeds>.
+- **Parked:** <Side idea parked out of scope, plus reopen condition>.
