@@ -96,7 +96,7 @@ def sync_navigation(html: str, javascript: str) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--run', type=Path, required=True)
-    parser.add_argument('--report', type=Path, help='Optional HTML path inside delivery/; defaults to delivery/<topic>.html.')
+    parser.add_argument('--report', type=Path, help='Optional HTML path; defaults to manifest output_path or delivery/<topic>.html.')
     args = parser.parse_args()
     try:
         run, meta = load_run(args.run)

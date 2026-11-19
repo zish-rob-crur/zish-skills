@@ -16,20 +16,20 @@ Build technical reports readers understand in 5 seconds and can articulate clear
 | Explain | What happens, and how does it work? | 5-second snapshot (`.summary-grid`) → contrast (`.mental-model`) → concrete walkthrough & mechanism → boundaries |
 | Report / ADR | What is decided/assessed, why, and what reverses it? | 5-second decision snapshot (`.summary-grid`) → decisive evidence → tradeoffs & baseline → change conditions |
 
-- **Task-named HTML deliverable:** Generate one offline HTML file named after the task slug, **`<run_dir>/delivery/<task-slug>.html`** (e.g., `delivery/sync-file-loss-adr.html`, never generic `report.html`). Add `<task-slug>.md` only when requested. Default to Simplified Chinese (`lang="zh-CN"`) unless the request uses or asks for another language.
-- **External storage only:** Keep generated HTML, figures, QA screenshots, and publish payloads outside repositories (`references/storage-policy.md`). Version only skill source files.
+- **Task-named HTML deliverable:** Deliver one offline HTML file named after the task slug, **`<run_dir>/delivery/<task-slug>.html`** (e.g., `delivery/sync-file-loss-adr.html`, never generic `report.html`), or write directly to the user's requested `--output` directory or `.html` path. Add `<task-slug>.md` only when requested. Default to Simplified Chinese (`lang="zh-CN"`) unless the request uses or asks for another language.
+- **External QA & workspace:** Keep default deliverables, figures, QA screenshots, and publish payloads outside repositories (`references/storage-policy.md`). When the user specifies a custom output path (even inside a repo `docs/` folder), send only the final self-contained HTML there while keeping `run_dir` outside all repositories, and never write inside the skill source directory.
 - **Separate verdicts and strict authorization:** Verify factual correctness, reader comprehension, visual quality, and user approval independently. Publish or redact strictly within explicit user authorization.
 
 ## 1. Frame the Question and External Workspace
 
-Infer audience, central question, evidence, and open unknowns from context; ask only what changes the outcome. Before writing files, initialize an external run directory with a concise English `--topic` slug:
+Infer audience, central question, evidence, and open unknowns from context; ask only what changes the outcome. Before writing files, initialize an external run directory with a concise English `--topic` slug (passing `--output <dir-or-file.html>` or `--output-dir <dir>` when the user specifies an output location):
 
 ```bash
 python3 -B <skill-dir>/scripts/report_workspace.py init \
-  --workspace "$PWD" --topic <task-slug>
+  --workspace "$PWD" --topic <task-slug> [--output <dir-or-file.html>]
 ```
 
-Write every deliverable and intermediate file—starting with `delivery/<task-slug>.html` (`report_path` in the JSON output)—inside `run_dir`. If no authorized external directory is writable, answer in chat and note the limitation.
+Write the final HTML to the returned `report_path` and keep all intermediates, figures, and QA artifacts under `run_dir`. If no authorized directory is writable, answer in chat and note the limitation.
 
 ## 2. Structure Prose and Visuals for Comprehension
 
@@ -66,7 +66,7 @@ Follow `references/visual-qa.md`. Before browser checks, read the rendered copy 
 
 ```bash
 python3 -B <skill-dir>/scripts/apply_report_theme.py --run <run-dir>
-python3 -B <skill-dir>/scripts/check_report.py <run-dir>/delivery/<task-slug>.html --require-theme
+python3 -B <skill-dir>/scripts/check_report.py <report-path> --require-theme
 python3 -B <skill-dir>/scripts/report_workspace.py check --run <run-dir>
 ```
 
@@ -74,4 +74,4 @@ Record static checks, visual inspection, content review, and user approval separ
 
 ## 6. Publish and Deliver
 
-Publish to Feishu only when requested (`references/feishu-publish.md`), inserting external figures with readback verification while preserving human edits. Deliver `<run_dir>/delivery/<task-slug>.html`, the core conclusion, checks actually executed, and open unknowns without repeating the report. Never commit, stage, or clean up artifacts inside repositories without permission.
+Publish to Feishu only when requested (`references/feishu-publish.md`), inserting external figures with readback verification while preserving human edits. Deliver `<report-path>`, the core conclusion, checks actually executed, and open unknowns without repeating the report. Never commit, stage, or clean up artifacts inside repositories without permission.

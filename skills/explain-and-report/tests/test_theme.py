@@ -131,6 +131,27 @@ class ThemeTests(unittest.TestCase):
             self.assertNotEqual(denied.returncode, 0)
             self.assertEqual(target.read_text(), PAGE)
 
+    def test_cli_updates_custom_output_path_and_rejects_symlink(self):
+        with tempfile.TemporaryDirectory(prefix='report-custom-out-') as tmp:
+            base = Path(tmp)
+            workspace = base / 'project'
+            workspace.mkdir()
+            custom_dir = workspace / 'docs' / 'reports'
+            run = init_run(workspace, 'custom-out', base / 'outputs', output=custom_dir)
+            out_file = custom_dir.resolve() / 'custom-out.html'
+            out_file.write_text(PAGE)
+            command = [sys.executable, '-B', str(ROOT / 'scripts/apply_report_theme.py'), '--run', str(run)]
+            applied = subprocess.run(command, capture_output=True, text=True)
+            self.assertEqual(applied.returncode, 0, applied.stderr)
+            self.assertEqual(check_theme(out_file.read_text(), CSS), [])
+            out_file.unlink()
+            target = workspace / 'outside.html'
+            target.write_text(PAGE)
+            out_file.symlink_to(target)
+            denied = subprocess.run(command, capture_output=True, text=True)
+            self.assertNotEqual(denied.returncode, 0)
+            self.assertEqual(target.read_text(), PAGE)
+
 
 if __name__ == '__main__':
     unittest.main()

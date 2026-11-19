@@ -124,7 +124,39 @@ def default_home() -> Path:
         raise PolicyError('EXPLAIN_REPORT_HOME must be absolute.')
     return root
 
-def init_run(workspace: Path, topic: str, root: Path | None = None) -> Path:
+def assert_outside_skill_root(path: Path) -> None:
+    lexical = absolute(path)
+    resolved = lexical.resolve()
+    for skill_root in (absolute(SKILL_ROOT), SKILL_ROOT.resolve()):
+        if within(lexical, skill_root) or within(resolved, skill_root):
+            raise PolicyError(f'Output cannot be inside the skill source directory: {path}')
+
+def resolve_custom_output(base_dir: Path, topic: str, output: Path, *, force_dir: bool = False) -> Path:
+    raw = Path(output).expanduser()
+    candidate = absolute(raw if raw.is_absolute() else (base_dir / raw))
+    if candidate.is_symlink():
+        raise PolicyError('Symlink report paths are not accepted.')
+    assert_outside_skill_root(candidate)
+    if force_dir:
+        if candidate.exists() and not candidate.is_dir():
+            raise PolicyError(f'--output-dir exists and is not a directory: {candidate}')
+        target = candidate / f'{topic}.html'
+    elif (candidate.exists() and candidate.is_dir()) or candidate.suffix.lower() not in {'.html', '.htm'}:
+        target = candidate / f'{topic}.html'
+    else:
+        target = candidate
+    if target.is_symlink() or (target.exists() and target.is_dir()):
+        raise PolicyError('Report output path cannot be a symlink or directory.')
+    assert_outside_skill_root(target)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    resolved_target = target.parent.resolve() / target.name
+    if resolved_target.is_symlink():
+        raise PolicyError('Symlink report paths are not accepted.')
+    assert_outside_skill_root(resolved_target)
+    return resolved_target
+
+def init_run(workspace: Path, topic: str, root: Path | None = None,
+             output: Path | None = None, *, output_is_dir: bool = False) -> Path:
     if not re.fullmatch(r'[a-z0-9][a-z0-9-]{0,47}', topic):
         raise PolicyError('--topic must be a non-sensitive ASCII slug (1–48 lowercase letters/digits/hyphens).')
     original = absolute(workspace)
@@ -136,6 +168,7 @@ def init_run(workspace: Path, topic: str, root: Path | None = None) -> Path:
         raise PolicyError('--root must be an absolute path.')
     assert_external(proposed, original)
     root = assert_external(proposed, workspace)
+    custom_report = resolve_custom_output(original, topic, output, force_dir=output_is_dir) if output is not None else None
     before = image_changes(workspace)
     project_name = re.sub(r'[^a-zA-Z0-9_-]+', '-', workspace.name).strip('-')[:28] or 'project'
     project = project_name + '-' + hashlib.sha256(str(workspace).encode()).hexdigest()[:8]
@@ -151,7 +184,8 @@ def init_run(workspace: Path, topic: str, root: Path | None = None) -> Path:
             'created_at': datetime.now(timezone.utc).isoformat(),
             'run_dir': str(run), 'storage_root': str(root), 'workspace': str(workspace),
             'skill_root': str(SKILL_ROOT), 'topic': topic,
-            'default_report': f'delivery/{topic}.html',
+            'default_report': str(custom_report) if custom_report else f'delivery/{topic}.html',
+            'output_path': str(custom_report) if custom_report else None,
             'git_image_changes_before': before,
             'publication_status': 'not_requested',
             'privacy': 'local_internal_not_automatically_shared'
@@ -188,16 +222,45 @@ def resolve_report_html(run: Path, meta: dict, explicit: Path | None = None) -> 
     workspace = Path(meta['workspace'])
     if explicit is not None:
         raw = Path(explicit).expanduser()
-        candidate = absolute(raw if raw.is_absolute() else (run / raw))
-        for item in (candidate, *candidate.parents):
-            if item == delivery:
-                break
-            if item.is_symlink():
-                raise PolicyError('Symlink report paths are not accepted.')
-        resolved = assert_external(candidate, workspace)
-        if not within(candidate, delivery) or not within(resolved, delivery_real):
-            raise PolicyError('Report HTML must live inside delivery/.')
-        return resolved
+        if raw.is_absolute():
+            candidate = absolute(raw)
+        elif (run / raw).exists() or within(absolute(run / raw), delivery):
+            candidate = absolute(run / raw)
+        else:
+            candidate = absolute(Path.cwd() / raw)
+        if candidate.is_symlink():
+            raise PolicyError('Symlink report paths are not accepted.')
+        assert_outside_skill_root(candidate)
+        if candidate.suffix.lower() not in {'.html', '.htm'}:
+            raise PolicyError('Explicit --report must point to an .html file.')
+        if candidate.exists() and candidate.is_dir():
+            raise PolicyError('Report output path cannot be a directory.')
+        if not meta.get('output_path') and within(candidate, delivery):
+            for item in (candidate, *candidate.parents):
+                if item == delivery:
+                    break
+                if item.is_symlink():
+                    raise PolicyError('Symlink report paths are not accepted.')
+            resolved = assert_external(candidate, workspace)
+            if not within(resolved, delivery_real):
+                raise PolicyError('Report HTML must live inside delivery/.')
+            return resolved
+        resolved_parent = candidate.parent.resolve() if candidate.parent.exists() else candidate.parent
+        final_path = resolved_parent / candidate.name
+        if final_path.is_symlink():
+            raise PolicyError('Symlink report paths are not accepted.')
+        assert_outside_skill_root(final_path)
+        return final_path
+    if meta.get('output_path'):
+        custom = absolute(Path(str(meta['output_path'])).expanduser())
+        if custom.is_symlink():
+            raise PolicyError('Symlink report paths are not accepted.')
+        if custom.parent.exists():
+            custom = custom.parent.resolve() / custom.name
+        if custom.is_symlink():
+            raise PolicyError('Symlink report paths are not accepted.')
+        assert_outside_skill_root(custom)
+        return custom
     topic = str(meta.get('topic') or 'report')
     preferred = delivery / f'{topic}.html'
     if preferred.is_symlink():
@@ -245,16 +308,29 @@ def main() -> int:
     init.add_argument('--workspace', type=Path, default=Path.cwd())
     init.add_argument('--topic', default='report')
     init.add_argument('--root', type=Path)
+    init.add_argument('--output', type=Path, help='Optional custom output directory or .html file path for the final HTML report.')
+    init.add_argument('--output-dir', type=Path, help='Optional custom directory where <topic>.html will be written.')
     check = sub.add_parser('check', help='Read-only safety checks; does not modify Git or delete files.')
     check.add_argument('--run', type=Path, required=True)
     args = parser.parse_args()
     try:
         if args.command == 'init':
-            run = init_run(args.workspace, args.topic, args.root)
+            if args.output and args.output_dir:
+                raise PolicyError('Pass either --output or --output-dir, not both.')
+            output_arg = args.output_dir or args.output
+            run = init_run(
+                args.workspace,
+                args.topic,
+                args.root,
+                output_arg,
+                output_is_dir=bool(args.output_dir),
+            )
+            _, meta = load_run(run)
+            report_path = resolve_report_html(run, meta)
             print(json.dumps({
                 'ok': True,
                 'run_dir': str(run),
-                'report_path': str(run / 'delivery' / f'{args.topic}.html'),
+                'report_path': str(report_path),
             }, ensure_ascii=False))
             return 0
         result = check_run(args.run)

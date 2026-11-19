@@ -11,6 +11,8 @@ If the user explicitly requests a report index in the repository, write only aut
 
 Run `python3 -B <skill-dir>/scripts/report_workspace.py init --workspace "$PWD" --topic system-review` before generating artifacts. Use a short English topic without customer information and take the returned JSON `run_dir` as the destination; do not substitute `./reports/`. All subsequent writes, including third-party publishing intermediates and debug output, belong in that run. If the default location is unavailable, use an already authorized writable location outside repositories; otherwise deliver feasible content in chat and state the limitation.
 
+When the user explicitly specifies an output directory or `.html` path (such as `~/Desktop/reports` or `./docs/reports`), pass `--output <dir-or-file.html>` (or `--output-dir <dir>`) to `init`. That writes only the final self-contained HTML to `report_path` (even inside a Git-backed folder), while `run_dir` (`figures/`, `qa/`, `publish/`) remains outside all repositories. Writing inside the installed skill source directory remains forbidden.
+
 ```text
 ${EXPLAIN_REPORT_HOME:-${XDG_STATE_HOME:-$HOME/.local/state}/explain-and-report}/
 ├── runs/

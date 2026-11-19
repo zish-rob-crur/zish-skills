@@ -2,7 +2,7 @@
 
 Create offline visual HTML reports that readers grasp in 5 seconds and can articulate clearly afterward. Pairs technical-magazine pacing with engineering-atlas structure for system explanations, ADRs, architecture convergence proposals, agent traces, and evaluation reports.
 
-The default deliverable is one task-named file, **`<run_dir>/delivery/<topic>.html`** (e.g., `delivery/sync-file-loss-adr.html`); Markdown is generated only on explicit request. Keep all generated reports, figures, and QA screenshots outside code repositories, and publish to Feishu only with explicit authorization.
+By default, reports go to **`<run_dir>/delivery/<topic>.html`** outside code repositories. When you specify an output folder or `.html` path, pass `--output <dir-or-file.html>` (or `--output-dir <dir>`) to write only the final HTML there while keeping figures, QA screenshots, and publish payloads in the external `run_dir`. Markdown is generated only on explicit request, and Feishu publishing runs only with explicit authorization.
 
 ## Visual Identity and Navigation
 
@@ -48,7 +48,7 @@ runs/<project-name>-<path-hash>/<time>-<topic>-<random>/
 
 | Script | Purpose | Dependencies |
 | --- | --- | --- |
-| `report_workspace.py init/check` | Create external run directory, return `report_path`, guard repo boundaries | Python 3.10+, stdlib; `git` for repo checks |
+| `report_workspace.py init/check` | Create external run directory, optionally bind `--output`/`--output-dir`, return `report_path`, guard repo/skill boundaries | Python 3.10+, stdlib; `git` for repo checks |
 | `apply_report_theme.py` | Embed `assets/report-theme.css` and refresh inline `report-navigation.js` (supports `--report`) | Python 3.10+, stdlib |
 | `check_report.py` | Run static HTML, anchor, contrast-hint, SVG-length, and inline-code checks | Python 3.10+, stdlib |
 | `capture_report.py` | Capture desktop/mobile/no-JS views and export tagged figures (supports `--report`) | Existing Playwright Python & Chromium |

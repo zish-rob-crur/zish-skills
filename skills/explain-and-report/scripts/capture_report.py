@@ -16,7 +16,7 @@ import platform
 import re
 import shutil
 import uuid
-from report_workspace import PolicyError, check_run, digest, load_run, resolve_report_html, write_json
+from report_workspace import PolicyError, check_run, digest, load_run, resolve_report_html, within, write_json
 from check_report import check_html
 
 CORE_TEXT = """() => {
@@ -54,7 +54,8 @@ def capture(run_arg: Path, browser_path: str | None, export_figures: bool, load_
     output = run / 'qa/screenshots' / capture_id
     output.mkdir(mode=0o700)
     result = {
-        'source_html_sha256': source_hash, 'capture_id': capture_id, 'source': str(report.relative_to(run)),
+        'source_html_sha256': source_hash, 'capture_id': capture_id,
+        'source': str(report.relative_to(run)) if within(report, run) else str(report),
         'captured_at': datetime.now(timezone.utc).isoformat(), 'os': platform.platform(),
         'visual_review': 'not_reviewed', 'content_review': 'not_reviewed', 'user_design_approval': 'not_requested',
         'static_warnings': warnings, 'screenshots': [], 'figure_exports': [], 'checks': {},

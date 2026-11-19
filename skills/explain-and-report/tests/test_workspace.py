@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
-from report_workspace import PolicyError, assert_external, check_run, default_home, init_run, load_run
+from report_workspace import PolicyError, assert_external, check_run, default_home, init_run, load_run, resolve_report_html
 
 class WorkspaceTests(unittest.TestCase):
     def setUp(self):
@@ -134,5 +134,31 @@ class WorkspaceTests(unittest.TestCase):
         run=init_run(self.source,'report',self.output)
         self.assertEqual(run.stat().st_mode & 0o777,0o700)
         self.assertEqual((run/'manifest.json').stat().st_mode & 0o777,0o600)
+    def test_custom_output_directory_allows_repo_doc_and_keeps_run_external(self):
+        self.repo()
+        custom_dir = self.source / 'docs' / 'reports'
+        run = init_run(self.source, 'sync-adr', self.output, output=custom_dir)
+        _, meta = load_run(run)
+        expected = custom_dir.resolve() / 'sync-adr.html'
+        self.assertEqual(resolve_report_html(run, meta), expected)
+        self.assertEqual(meta['output_path'], str(expected))
+        expected.write_text('<!doctype html><title>ok</title>')
+        self.assertTrue(check_run(run)['ok'])
+    def test_custom_output_explicit_html_and_output_dir_mode(self):
+        explicit = self.source / 'custom-brief.html'
+        run = init_run(self.source, 'sync-adr', self.output, output=explicit)
+        _, meta = load_run(run)
+        self.assertEqual(resolve_report_html(run, meta), explicit.resolve())
+        dir_run = init_run(self.source, 'sync-adr', self.output, output=self.source / 'my.folder', output_is_dir=True)
+        _, dir_meta = load_run(dir_run)
+        self.assertEqual(resolve_report_html(dir_run, dir_meta), (self.source / 'my.folder/sync-adr.html').resolve())
+        existing_file = self.source / 'not-a-dir.txt'
+        existing_file.write_text('x')
+        with self.assertRaises(PolicyError):
+            init_run(self.source, 'sync-adr', self.output, output=existing_file, output_is_dir=True)
+    def test_custom_output_inside_skill_source_rejected(self):
+        from report_workspace import SKILL_ROOT
+        with self.assertRaises(PolicyError):
+            init_run(self.source, 'bad', self.output, output=SKILL_ROOT / 'bad.html')
 
 if __name__=='__main__':unittest.main()

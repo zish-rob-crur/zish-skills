@@ -6,11 +6,13 @@ Review the final content's evidence and metric definitions, run static preflight
 
 ```bash
 python3 -B <skill-dir>/scripts/apply_report_theme.py --run <run-dir>
-python3 -B <skill-dir>/scripts/check_report.py <run-dir>/delivery/<topic>.html --require-theme
+python3 -B <skill-dir>/scripts/check_report.py <report-path> --require-theme
 python3 -B <skill-dir>/scripts/report_workspace.py check --run <run-dir>
 # Only where the host permits this browser route and dependencies already exist:
 python3 -B <skill-dir>/scripts/capture_report.py --run <run-dir>
 ```
+
+`<report-path>` is `<run-dir>/delivery/<topic>.html` by default, or the manifest's `output_path` when initialized with `--output`/`--output-dir` (override via `--report`).
 
 The apply command embeds canonical CSS and refreshes an existing standard `report-navigation` script, preserving article content, local styles, and unrelated scripts. It does not add missing navigation markup or migrate arbitrary HTML. `--require-theme` detects a missing or changed CSS block, not navigation compatibility, local overrides, or computed appearance. For an explicitly requested alternate theme, omit the apply command and that flag, keeping the remaining checks. Inspect local CSS and compare actual rendering with the shared reference for the default theme.
 
