@@ -98,7 +98,7 @@ class ThemeTests(unittest.TestCase):
             workspace = base / 'project'
             workspace.mkdir()
             run = init_run(workspace, 'theme-test', base / 'outputs')
-            report = run / 'delivery/report.html'
+            report = run / 'delivery/theme-test.html'
             old_navigation = '<script id="report-navigation">oldNavigation();</script>'
             report.write_text(PAGE.replace('</body>', old_navigation + '</body>'))
             command = [sys.executable, '-B', str(ROOT / 'scripts/apply_report_theme.py'), '--run', str(run)]
@@ -114,6 +114,16 @@ class ThemeTests(unittest.TestCase):
             self.assertNotEqual(denied_duplicate.returncode, 0)
             self.assertEqual(report.read_text(), duplicate)
             report.unlink()
+            custom = run / 'delivery/custom-task.html'
+            custom.write_text(PAGE)
+            applied_auto = subprocess.run(command, capture_output=True, text=True)
+            self.assertEqual(applied_auto.returncode, 0, applied_auto.stderr)
+            self.assertEqual(check_theme(custom.read_text(), CSS), [])
+            custom.write_text(PAGE)
+            applied_custom = subprocess.run([*command, '--report', str(custom)], capture_output=True, text=True)
+            self.assertEqual(applied_custom.returncode, 0, applied_custom.stderr)
+            self.assertEqual(check_theme(custom.read_text(), CSS), [])
+            custom.unlink()
             target = workspace / 'source.html'
             target.write_text(PAGE)
             report.symlink_to(target)

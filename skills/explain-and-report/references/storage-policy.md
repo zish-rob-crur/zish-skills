@@ -17,7 +17,7 @@ ${EXPLAIN_REPORT_HOME:-${XDG_STATE_HOME:-$HOME/.local/state}/explain-and-report}
 │   └── <project-name>-<path-hash>/
 │       └── <UTC-time>-<topic>-<random>/
 │           ├── manifest.json
-│           ├── delivery/             # report.html; report.md only on explicit request
+│           ├── delivery/             # <topic>.html; <topic>.md only on explicit request
 │           ├── figures/              # Body figures, not QA screenshots
 │           ├── qa/
 │           │   ├── review.md

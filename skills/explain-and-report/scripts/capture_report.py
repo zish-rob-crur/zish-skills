@@ -16,7 +16,7 @@ import platform
 import re
 import shutil
 import uuid
-from report_workspace import PolicyError, check_run, digest, load_run, write_json
+from report_workspace import PolicyError, check_run, digest, load_run, resolve_report_html, write_json
 from check_report import check_html
 
 CORE_TEXT = """() => {
@@ -35,12 +35,13 @@ PAGE_METRICS = """() => ({
  main_text_length: document.querySelector('main').innerText.length
 })"""
 
-def capture(run_arg: Path, browser_path: str | None, export_figures: bool, load_mode: str = "file") -> tuple[Path, dict]:
+def capture(run_arg: Path, browser_path: str | None, export_figures: bool, load_mode: str = "file",
+            report_arg: Path | None = None) -> tuple[Path, dict]:
     check = check_run(run_arg)
     if not check['ok']:
         raise PolicyError(json.dumps(check, ensure_ascii=False))
     run, meta = load_run(run_arg)
-    report = run / 'delivery/report.html'
+    report = resolve_report_html(run, meta, report_arg)
     source_hash = digest(report)
     errors, warnings = check_html(report.read_text(encoding='utf-8'))
     if errors:
@@ -53,7 +54,7 @@ def capture(run_arg: Path, browser_path: str | None, export_figures: bool, load_
     output = run / 'qa/screenshots' / capture_id
     output.mkdir(mode=0o700)
     result = {
-        'source_html_sha256': source_hash, 'capture_id': capture_id, 'source': 'delivery/report.html',
+        'source_html_sha256': source_hash, 'capture_id': capture_id, 'source': str(report.relative_to(run)),
         'captured_at': datetime.now(timezone.utc).isoformat(), 'os': platform.platform(),
         'visual_review': 'not_reviewed', 'content_review': 'not_reviewed', 'user_design_approval': 'not_requested',
         'static_warnings': warnings, 'screenshots': [], 'figure_exports': [], 'checks': {},
@@ -192,6 +193,7 @@ def capture(run_arg: Path, browser_path: str | None, export_figures: bool, load_
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--run', type=Path, required=True)
+    parser.add_argument('--report', type=Path, help='Optional HTML path inside delivery/; defaults to delivery/<topic>.html.')
     parser.add_argument('--browser', help='Path to an already installed Chromium executable; otherwise auto-detect.')
     parser.add_argument('--load-mode', choices=['file', 'content'], default='file',
                         help='Default file://. Explicit content mode for restricted hosts; does NOT verify file://.')
@@ -199,7 +201,7 @@ def main() -> int:
     args = parser.parse_args()
     old_umask = os.umask(0o077)
     try:
-        output, result = capture(args.run, args.browser, args.export_figures, args.load_mode)
+        output, result = capture(args.run, args.browser, args.export_figures, args.load_mode, args.report)
         print(json.dumps({'capture_dir': str(output), 'automated_status': result['automated_status'],
             'failures': result['failures'], 'visual_review': 'not_reviewed'}, ensure_ascii=False, indent=2))
         return 0 if result['automated_status'] == 'passed' else 1

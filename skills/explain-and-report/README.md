@@ -1,191 +1,79 @@
-# Explain & Report · v0.5.0
+# Explain & Report · v0.5.1
 
-Create a technical report that readers can understand, scan in 5 seconds, and immediately articulate to others: a clear judgment, an intuitive mental model, natural human-readable Chinese prose free of code-symbol overload, diagrams that expose the mechanism, and evidence that supports the conclusion. Combine the reading rhythm of a technical magazine with the structural precision of an engineering atlas. Use for technical explanations, ADRs (Architecture Decision Records), architecture convergence proposals, system analysis, business workflows, agent traces, and evaluation reports.
+Create offline visual HTML reports that readers grasp in 5 seconds and can articulate clearly afterward. Pairs technical-magazine pacing with engineering-atlas structure for system explanations, ADRs, architecture convergence proposals, agent traces, and evaluation reports.
 
-The default deliverable is `report.html` only. A Markdown version is generated only on explicit request.
-Relevant available evidence images, including error screenshots, are embedded in the HTML by default with short captions. Screenshots of the report's own layout checks stay in QA storage.
+The default deliverable is one task-named file, **`<run_dir>/delivery/<topic>.html`** (e.g., `delivery/sync-file-loss-adr.html`); Markdown is generated only on explicit request. Keep all generated reports, figures, and QA screenshots outside code repositories, and publish to Feishu only with explicit authorization.
 
-**Keep skill source in the repository, reports and review images outside it, and publish to Feishu only with explicit authorization.**
+## Visual Identity and Navigation
 
-## Included capabilities
+All reports share the **Zish Technical** identity in `assets/report-theme.css`:
 
-Skill instructions, evidence rules, design intent, optional HTML examples, external-workspace scripts, static preflight, an optional screenshot script, and a publishing workflow that reuses existing Feishu skills.
+- **Theme & canvas:** Charcoal dark mode with a built-in warm-paper light toggle (`[data-theme-toggle]`), wide canvas (`max-width: min(1620px, 96vw)`), comfortable prose measure (`--body: 52rem`), and full-width grids.
+- **Explanation blocks:** 5-second executive snapshot cards (`.summary-grid`), right-margin sidenotes (`.with-sidenote` / `.sidenote`), counterexample vs. design contrasts (`.mental-model`), responsive CSS Grid flow maps (`.batch-map`), chronological traces (`.trace-stream` / `.turn-row`), external `.chart-legend` blocks, and `.diff-box` blocks.
+- **Zero-clutter reading chrome:** Compact bottom-left floating TOC (`目录` with hover preview, click-to-pin, and progress bar), inline `[C1]` / `[data-tip-title]` popovers, and a bottom-right hover/pin detail drawer (`.explorer-float-drawer`) driven by `assets/report-navigation.js`. Everything essential degrades cleanly without JS.
 
-Reports share the **Zish Technical** identity in `assets/report-theme.css`: charcoal dark surfaces with a built-in warm-paper light mode toggle (`[data-theme-toggle]`), orange emphasis, a wide canvas (`max-width: min(1620px, 96vw)`, `--content-max: 100%`) paired with a comfortable prose measure (`--body: 52rem`), 5-second executive snapshot cards (`.summary-grid`), right-margin sidenotes (`.with-sidenote` / `.sidenote`), responsive CSS Grid flow diagrams (`.batch-map`), left-event / right-annotation trace streams (`.trace-stream` / `.turn-row`), external HTML chart legends (`.chart-legend` / `.milestone-strip`), diff blocks (`.diff-box`), low-noise citation badges (`a.cite-ref`), declarative bottom-right floating detail drawers (`.explorer-float-drawer`), and reusable diagram/status styles. The model chooses content composition; magazine, brief, ADR, case study, and architecture atlas retain the same identity. A different theme requires a user request.
+## Bundled Assets
 
-The complete synthetic references show two reading paths: `assets/reference-layout.html` explains a mechanism (with an executive snapshot, intuitive positive/negative contrast, trace-stream annotations, and sidenotes); `assets/reference-report.html` supports a scoped ADR/decision with evidence, tradeoffs, inline citation popovers, hover/pin detail drawer previews, and conditions for changing it. The flow and replay assets are component examples. Reuse relevant parts without treating their combined contents as a report outline.
+| File | Purpose |
+| --- | --- |
+| `assets/report-shell.html` | Minimal offline starter shell with theme toggle, floating TOC, and navigation controller |
+| `assets/reference-layout.html` | Complete Explain reference (snapshot, contrast, trace-stream, sidenotes) |
+| `assets/reference-report.html` | Complete Report / ADR reference (decision snapshot, comparison table, drawers, citations) |
+| `assets/flow-patterns.html` | Static CSS Grid diagrams for fan-out, convergence, branching, and validation |
+| `assets/mechanism-walkthrough.html` | Interactive sequence replay paired with static explanation |
 
-Reports include a **compact bottom-left floating TOC (`目录`)** (`left: 24px; bottom: 24px`, `width: 9.5rem`) with a reading percentage and thin progress bar, giving `main#main` 100% of the wide canvas without stealing horizontal sidebar width or obstructing the header. Hovering previews the upward directory panel, clicking `目录` pins/unpins it, current-section highlighting tracks location, hovering/focusing `[C1]` citation links or `[data-tip-title]` elements previews evidence/notes inline, and `.jump-pill[data-drawer-target]` opens a bottom-right hover-to-preview / click-to-pin detail drawer. Without JavaScript, the directory remains inline above `main` and progress stays hidden.
-
-This is not a standalone Feishu synchronization client and does not bundle credentials or external skills. The agent uses document tools actually installed and authorized in your environment. Local reports work without Feishu.
-
-## Installation
-
-The extracted top-level directory must be named `explain-and-report` and contain `SKILL.md`.
-
-Use `~/.agents/skills/` for Codex personal skills and `~/.claude/skills/` for Claude Code personal skills. See [installation sources](references/sources.md).
-
-For a repository checkout, link its canonical skill directory into both discovery directories:
+## Install
 
 ```bash
-# Run from the root of this zish-skills checkout.
-SKILL_SOURCE="$PWD/skills/explain-and-report"
-for SKILL_DEST in "$HOME/.agents/skills" "$HOME/.claude/skills"; do
-  mkdir -p "$SKILL_DEST"
-  if [ -e "$SKILL_DEST/explain-and-report" ] || [ -L "$SKILL_DEST/explain-and-report" ]; then
-    printf 'Existing entry: %s; inspect it before replacing.\n' "$SKILL_DEST/explain-and-report"
-  else
-    ln -s "$SKILL_SOURCE" "$SKILL_DEST/explain-and-report"
-  fi
-done
+npx skills add https://github.com/zish-rob-crur/zish-skills --skill explain-and-report --agent codex --global
 ```
 
-For a ZIP distribution, run the following from the download directory. Back up and move an existing version before replacing it; the command refuses to overwrite to avoid mixing versions.
+Invoke `$explain-and-report` in Codex, `/explain-and-report` in Claude Code, or reference it by name in Antigravity CLI. Deliverables default to Simplified Chinese unless another language is requested.
 
-```bash
-# Codex; for Claude Code use "$HOME/.claude/skills".
-DEST="$HOME/.agents/skills"
-if [ -e "$DEST/explain-and-report" ] || [ -L "$DEST/explain-and-report" ]; then
-  printf '%s\n' 'A skill with this name exists. Back up and move the old version before installing.'
-else
-  mkdir -p "$DEST"
-  unzip explain-and-report-v0.4.1.zip -d "$DEST"
-fi
-```
+## External Run Layout
 
-Confirm the installed path is `<DEST>/explain-and-report/SKILL.md`, without an extra version directory. Do not keep multiple versions of the same name in discovery directories. If the host has not refreshed, start a new session and recheck its skill list.
-
-Teams may version **this source package**. It contains no PNG/JPEG files, run screenshots, or actual business reports. The two reference HTML files are reusable synthetic sources, not QA evidence from a report run or proof of user design approval.
-
-## Static flow patterns (0.4)
-
-`assets/flow-patterns.html` demonstrates task fan-out, independent inputs converging on a validator, labeled decision branches, and results crossing into aggregate acceptance. Its synthetic diagrams work without JavaScript; the shared reading navigation is an optional enhancement. Copy it to an external run before previewing.
-
-Plan essential relationships before drafting long prose, and check topology and coverage separately from layout. More figures are useful when they answer distinct questions; a fixed figure quota or a decorative chain does not establish clarity. See `references/diagrams-and-interaction.md`.
-
-## Mechanism walkthrough (0.3)
-
-`assets/mechanism-walkthrough.html` combines a branching flowchart, a step-by-step sequence replay, and a parameter/policy comparison in one synthetic cancellation example. It runs offline without dependencies. Copy it to an external run directory before previewing; do not generate screenshots in the skill repository.
-
-Read `references/diagrams-and-interaction.md` to reuse only the relevant pieces. Change the old-result arrival time around the interruption boundary, toggle the generation guard, and watch the sequence, queue, and explanations update together. The sample includes the equality case and states its concurrency assumptions.
-
-The instructions remain English; the sample uses Chinese to demonstrate the default report language. Upstream revisions and MIT notices are in `THIRD_PARTY_NOTICES.md`, with notices also embedded in the standalone sample.
-
-## Everyday use
-
-Invoke `$explain-and-report` in Codex, or `/explain-and-report` in Claude Code; you can also ask the agent to use the skill by name. See [sources](references/sources.md).
-
-Instructions and UI metadata are in English. Deliverables follow the user's requested language or the language of their request, defaulting to Simplified Chinese when neither is clear. Bundled HTML templates retain Chinese sample content for that default; adapt labels and HTML `lang` for other languages.
-
-### Explain complex content
+Artifacts live outside repositories under `${EXPLAIN_REPORT_HOME:-${XDG_STATE_HOME:-$HOME/.local/state}/explain-and-report}`:
 
 ```text
-Use explain-and-report to clarify the system mechanism we just discussed.
-Start with a direct answer, then use necessary diagrams to explain key relationships and boundaries.
-Produce HTML; do not turn every paragraph into a card.
+runs/<project-name>-<path-hash>/<time>-<topic>-<random>/
+  manifest.json
+  delivery/<topic>.html      # primary task-named HTML deliverable
+  figures/                  # body evidence figures
+  qa/review.md
+  qa/screenshots/           # layout/visual QA captures (never mixed into body)
+  publish/
 ```
 
-### System evaluation report
-
-```text
-Use explain-and-report to create a report from these evaluation results.
-Include conclusions, metric definitions, failure cases, and uncertainties.
-Produce HTML and review real browser screenshots.
-```
-
-### Engineering architecture atlas
-
-```text
-Use explain-and-report to explain this system as an engineering architecture atlas.
-Use the supplied visual references for direction. Choose useful views of component layers,
-parallel task routes, and runtime sequences; keep descriptions concise and status explicit.
-Produce a single offline HTML file.
-```
-
-### Publish to Feishu
-
-```text
-Use explain-and-report to generate a report, then use the installed Feishu document skill
-to publish to the document I specify, updating only the “Current Experiment Results” section.
-Keep the body editable, insert necessary figures, and retain sources and limitations.
-Do not upload QA screenshots, change sharing permissions, or overwrite other people's edits.
-```
-
-Provide the target document link with the request. For new documents, specify the destination folder. If the target is missing, the agent completes local materials and clarifies the missing publication details.
-For remote QA archiving, explicitly specify a separate restricted review document/folder and content scope. Sync support does not authorize automatic upload of future reports.
-
-## Artifact locations
-
-Default:
-
-```text
-~/.local/state/explain-and-report/
-  runs/<project-name>-<path-hash>/<time>-<topic>-<random>/
-    manifest.json
-    delivery/report.html
-    figures/
-    qa/screenshots/
-    qa/review.md
-    publish/
-```
-
-Set `EXPLAIN_REPORT_HOME` to another **absolute path outside repositories**. If unset, an existing `XDG_STATE_HOME` overrides the default state root. On macOS, you may choose:
-
-```bash
-export EXPLAIN_REPORT_HOME="$HOME/Library/Application Support/explain-and-report"
-```
-
-Do not use `./reports`, ignored repository directories, installed skill directories, or Git LFS. To satisfy Feishu relative-path requirements, launch tools from the external publish directory instead of copying assets into the repository.
-Keep body figures separate from review screenshots. Authorized report publication may include body figures; QA screenshots remain local by default. Files are not automatically deleted or uploaded to public image hosts.
-
-## Scripts and dependencies
+## Scripts and Smoke Check
 
 | Script | Purpose | Dependencies |
 | --- | --- | --- |
-| `report_workspace.py init/check` | Create external run directories, check paths, report repository image changes | Python 3.10+; git for Git-project checks |
-| `check_report.py` | Preflight common HTML structure, external resources, and references | Python 3.10+, standard library |
-| `apply_report_theme.py` | Embed the shared CSS in an external report, preserving body content and local layout CSS | Python 3.10+, standard library |
-| `capture_report.py` | Capture desktop/narrow-screen/diagram views, run basic browser checks, export body figures | Existing Playwright Python and Chromium |
+| `report_workspace.py init/check` | Create external run directory, return `report_path`, guard repo boundaries | Python 3.10+, stdlib; `git` for repo checks |
+| `apply_report_theme.py` | Embed `assets/report-theme.css` and refresh inline `report-navigation.js` (supports `--report`) | Python 3.10+, stdlib |
+| `check_report.py` | Run static HTML, anchor, contrast-hint, SVG-length, and inline-code checks | Python 3.10+, stdlib |
+| `capture_report.py` | Capture desktop/mobile/no-JS views and export tagged figures (supports `--report`) | Existing Playwright Python & Chromium |
 
-Scripts do not install dependencies automatically. Follow the user's and project's browser policy before choosing a browser route. Use authorized host browser tools when script-driven capture is not permitted. If the host requires a Chrome connection, its failure is not permission to use another browser or native desktop control. Without actual rendered-image inspection, do not claim visual review.
-
-From your source working directory, run a local smoke test using the synthetic report:
+Smoke test against a synthetic report:
 
 ```bash
 SKILL_DIR="$HOME/.agents/skills/explain-and-report"
-# For Claude Code, use "$HOME/.claude/skills/explain-and-report".
-INIT_JSON="$(python3 -B "$SKILL_DIR/scripts/report_workspace.py" init \
-  --workspace "$PWD" --topic style-smoke)" || exit 1
+INIT_JSON="$(python3 -B "$SKILL_DIR/scripts/report_workspace.py" init --workspace "$PWD" --topic style-smoke)" || exit 1
 RUN="$(printf '%s' "$INIT_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["run_dir"])')" || exit 1
-cp "$SKILL_DIR/assets/reference-layout.html" "$RUN/delivery/report.html"
+REPORT="$(printf '%s' "$INIT_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["report_path"])')" || exit 1
+cp "$SKILL_DIR/assets/reference-layout.html" "$REPORT"
 python3 -B "$SKILL_DIR/scripts/apply_report_theme.py" --run "$RUN"
-python3 -B "$SKILL_DIR/scripts/check_report.py" "$RUN/delivery/report.html" --require-theme
+python3 -B "$SKILL_DIR/scripts/check_report.py" "$REPORT" --require-theme
 python3 -B "$SKILL_DIR/scripts/report_workspace.py" check --run "$RUN"
-# Run only when the host permits this browser route and dependencies already exist.
-python3 -B "$SKILL_DIR/scripts/capture_report.py" --run "$RUN" --export-figures
-printf 'Run directory: %s\n' "$RUN"
 ```
 
-HTML opens through `file://` by default. If the host prohibits this but permits loading HTML content, **explicitly** add `--load-mode content`. That mode records `file_protocol_verified=false`; it does not establish that double-clicking the local file works.
-To select a browser, use `--browser /absolute/path/to/chromium`. Do not automatically download one or disable system security policies.
-
-Captures record `source_html_sha256`; recapture after HTML changes. Passing machine checks still leave `visual_review=not_reviewed`. After viewing screenshots, the agent writes `qa/review.md` separately.
-
-`--require-theme` detects a missing or modified shared CSS block. It does not validate navigation compatibility or prove that local styles preserve the identity; review overrides and actual rendering too. The apply command refreshes CSS and an existing standard `report-navigation` script together, leaving unrelated scripts unchanged. It does not install missing navigation markup or migrate arbitrary old reports. The shell includes the outline markup and inline `assets/report-navigation.js`. When maintaining either shared asset, update its inline copies in all bundled HTML assets together and run the tests.
-
-### Tests
+Run bundled unit and Node navigation tests:
 
 ```bash
 python3 -B -m unittest discover -s "$SKILL_DIR/tests" -v
-# Optional Node.js checks of the mechanism and reading navigation (no npm dependencies):
 node --test "$SKILL_DIR"/tests/*.cjs
 ```
 
-Tests use temporary directories and temporary Git repositories, leaving the user's repository index untouched. `tests/regression-prompts.md` contains separate agent regression tasks. Only runs with recorded inputs, instructions, outputs, and review evidence can be reported as executed; script tests do not establish generation quality.
-
-For substantial skill changes, distinguish revised samples, template/script checks, and fresh generation. Use an independent reader before showing the source inputs; record misunderstandings, removable repetitions, and whether the reader is an agent or a person. Check actual desktop/narrow-screen rendering separately. See `references/visual-qa.md` for the procedure and coverage matrix.
-
-## Package layout
+## Package Layout
 
 ```text
 explain-and-report/
@@ -193,38 +81,8 @@ explain-and-report/
 ├── README.md
 ├── agents/openai.yaml
 ├── THIRD_PARTY_NOTICES.md
-├── references/
-│   ├── diagrams-and-interaction.md
-│   ├── presentation-rules.md
-│   ├── storage-policy.md
-│   ├── visual-qa.md
-│   ├── feishu-publish.md
-│   └── sources.md
-├── assets/
-│   ├── flow-patterns.html
-│   ├── mechanism-walkthrough.html
-│   ├── report-shell.html
-│   ├── report-theme.css
-│   ├── report-navigation.js
-│   ├── reference-layout.html
-│   ├── reference-report.html
-│   └── publish-plan.example.json
-├── scripts/
-│   ├── report_workspace.py
-│   ├── check_report.py
-│   ├── apply_report_theme.py
-│   └── capture_report.py
-└── tests/
-    ├── test_mechanism.cjs
-    ├── test_navigation.cjs
-    ├── test_workspace.py
-    ├── test_html.py
-    ├── test_theme.py
-    └── regression-prompts.md
+├── references/   # presentation-rules.md, diagrams-and-interaction.md, storage-policy.md, visual-qa.md, feishu-publish.md, sources.md
+├── assets/       # theme CSS, navigation JS, shell, reference HTMLs, publish-plan.example.json
+├── scripts/      # report_workspace.py, apply_report_theme.py, check_report.py, capture_report.py
+└── tests/        # Python unittest suite, Node .cjs suites, regression-prompts.md
 ```
-
-## Main changes from v0.1
-
-Shared visual identity with flexible content composition; all run artifacts stored outside repositories by default; separate roles for body figures, QA screenshots, and long-term references; screenshots bound to source hashes; and optional publishing through existing Feishu skills with image allowlists, readback, and protection for human edits.
-
-This package does not implement persistent sync, a cross-platform pixel-regression service, repository-wide DLP, or a complete security sandbox. Path guards prevent mistakes; they cannot constrain another malicious process or replace access control.

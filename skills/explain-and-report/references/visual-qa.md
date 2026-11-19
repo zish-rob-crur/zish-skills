@@ -6,7 +6,7 @@ Review the final content's evidence and metric definitions, run static preflight
 
 ```bash
 python3 -B <skill-dir>/scripts/apply_report_theme.py --run <run-dir>
-python3 -B <skill-dir>/scripts/check_report.py <run-dir>/delivery/report.html --require-theme
+python3 -B <skill-dir>/scripts/check_report.py <run-dir>/delivery/<topic>.html --require-theme
 python3 -B <skill-dir>/scripts/report_workspace.py check --run <run-dir>
 # Only where the host permits this browser route and dependencies already exist:
 python3 -B <skill-dir>/scripts/capture_report.py --run <run-dir>

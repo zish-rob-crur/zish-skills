@@ -147,10 +147,11 @@ def init_run(workspace: Path, topic: str, root: Path | None = None) -> Path:
         for sub in ('delivery', 'figures', 'qa/screenshots', 'publish'):
             (run / sub).mkdir(parents=True, mode=0o700)
         write_json(run / 'manifest.json', {
-            'schema_version': 1, 'skill_version': '0.4.1', 'run_id': run_id,
+            'schema_version': 1, 'skill_version': '0.5.1', 'run_id': run_id,
             'created_at': datetime.now(timezone.utc).isoformat(),
             'run_dir': str(run), 'storage_root': str(root), 'workspace': str(workspace),
             'skill_root': str(SKILL_ROOT), 'topic': topic,
+            'default_report': f'delivery/{topic}.html',
             'git_image_changes_before': before,
             'publication_status': 'not_requested',
             'privacy': 'local_internal_not_automatically_shared'
@@ -178,6 +179,44 @@ def load_run(run: Path) -> tuple[Path, dict]:
     if meta.get('skill_root'):
         assert_external(run, Path(meta['workspace']), Path(meta['skill_root']))
     return run, meta
+
+def resolve_report_html(run: Path, meta: dict, explicit: Path | None = None) -> Path:
+    delivery = run / 'delivery'
+    if delivery.is_symlink():
+        raise PolicyError('Symlink report paths are not accepted.')
+    delivery_real = delivery.resolve()
+    workspace = Path(meta['workspace'])
+    if explicit is not None:
+        raw = Path(explicit).expanduser()
+        candidate = absolute(raw if raw.is_absolute() else (run / raw))
+        for item in (candidate, *candidate.parents):
+            if item == delivery:
+                break
+            if item.is_symlink():
+                raise PolicyError('Symlink report paths are not accepted.')
+        resolved = assert_external(candidate, workspace)
+        if not within(candidate, delivery) or not within(resolved, delivery_real):
+            raise PolicyError('Report HTML must live inside delivery/.')
+        return resolved
+    topic = str(meta.get('topic') or 'report')
+    preferred = delivery / f'{topic}.html'
+    if preferred.is_symlink():
+        raise PolicyError('Symlink report paths are not accepted.')
+    if preferred.exists():
+        return assert_external(preferred, workspace)
+    matches: list[Path] = []
+    if delivery.is_dir():
+        for entry in sorted(delivery.iterdir()):
+            if entry.suffix.lower() != '.html':
+                continue
+            if entry.is_symlink():
+                raise PolicyError('Symlink report paths are not accepted.')
+            matches.append(entry)
+    if len(matches) == 1:
+        return assert_external(matches[0], workspace)
+    if len(matches) > 1:
+        raise PolicyError('Multiple HTML files in delivery/; pass --report explicitly.')
+    return assert_external(preferred, workspace)
 
 def check_run(run: Path) -> dict:
     run, meta = load_run(run)
@@ -212,7 +251,11 @@ def main() -> int:
     try:
         if args.command == 'init':
             run = init_run(args.workspace, args.topic, args.root)
-            print(json.dumps({'ok': True, 'run_dir': str(run)}, ensure_ascii=False))
+            print(json.dumps({
+                'ok': True,
+                'run_dir': str(run),
+                'report_path': str(run / 'delivery' / f'{args.topic}.html'),
+            }, ensure_ascii=False))
             return 0
         result = check_run(args.run)
         print(json.dumps(result, ensure_ascii=False, indent=2))

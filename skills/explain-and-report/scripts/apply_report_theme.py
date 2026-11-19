@@ -9,7 +9,7 @@ import re
 import sys
 
 sys.dont_write_bytecode = True
-from report_workspace import PolicyError, assert_external, load_run
+from report_workspace import resolve_report_html, load_run
 
 THEME_PATH = Path(__file__).resolve().parents[1] / 'assets/report-theme.css'
 NAVIGATION_PATH = THEME_PATH.with_name('report-navigation.js')
@@ -96,13 +96,11 @@ def sync_navigation(html: str, javascript: str) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--run', type=Path, required=True)
+    parser.add_argument('--report', type=Path, help='Optional HTML path inside delivery/; defaults to delivery/<topic>.html.')
     args = parser.parse_args()
     try:
         run, meta = load_run(args.run)
-        report = run / 'delivery/report.html'
-        if report.parent.is_symlink() or report.is_symlink():
-            raise PolicyError('Symlink report paths are not accepted.')
-        assert_external(report, Path(meta['workspace']))
+        report = resolve_report_html(run, meta, args.report)
         html = report.read_text(encoding='utf-8')
         updated = apply_theme(html, THEME_PATH.read_text(encoding='utf-8'))
         updated = sync_navigation(updated, NAVIGATION_PATH.read_text(encoding='utf-8'))
