@@ -48,7 +48,7 @@ function mount({scroll = 0, innerWidth = 1440, invalid = false, observer = true,
       setAttribute(name,value) { this.attributes[name]=value; },
       removeAttribute(name) { delete this.attributes[name]; },
       getAttribute(name) { return this.attributes[name]; },
-      appendChild(child) { this.children.push(child); return child; },
+      appendChild(child) { this.children.push(child); child.parentNode = this; return child; },
       replaceChildren(...children) { this.children = children; },
       cloneNode(deep) {
         const copy = element(this.tagName);
@@ -72,9 +72,38 @@ function mount({scroll = 0, innerWidth = 1440, invalid = false, observer = true,
   const drawerDetails = withExtras ? element('DETAILS') : null;
   const dt = withExtras ? element('DT') : null;
   const dd = withExtras ? element('DD') : null;
+  const tableScroll = withExtras ? element('DIV') : null;
+  const table = withExtras ? element('TABLE') : null;
+  const thA = withExtras ? element('TH') : null;
+  const thB = withExtras ? element('TH') : null;
+  const agentTrace = withExtras ? element('DIV') : null;
+  const traceBtnAll = withExtras ? element('BUTTON') : null;
+  const traceBtn1 = withExtras ? element('BUTTON') : null;
+  const traceBtn2 = withExtras ? element('BUTTON') : null;
+  const traceStage1 = withExtras ? element('DIV') : null;
+  const traceStage2 = withExtras ? element('DIV') : null;
+  const meterMainFill = withExtras ? element('DIV') : null;
+  const meterMainText = withExtras ? element('SPAN') : null;
+  const meterSubFill = withExtras ? element('DIV') : null;
+  const meterSubGhost = withExtras ? element('DIV') : null;
+  const meterSubText = withExtras ? element('SPAN') : null;
   if (withExtras) {
     document.body = element('BODY');
     document.createElement = tag => element(tag.toUpperCase());
+    tableScroll.classList.add('table-scroll');
+    const thead = element('THEAD');
+    const tr = element('TR');
+    thA.textContent = 'Col A';
+    thB.textContent = 'Col B';
+    thA.getBoundingClientRect = () => ({width: 200});
+    thB.getBoundingClientRect = () => ({width: 200});
+    tr.appendChild(thA);
+    tr.appendChild(thB);
+    thead.appendChild(tr);
+    table.appendChild(thead);
+    tableScroll.appendChild(table);
+    thead.querySelector = sel => sel === 'tr' ? tr : null;
+    table.querySelector = sel => sel === 'thead' ? thead : null;
     citeLink.isLink = true;
     citeLink.attributes.href = '#C1';
     citeLink.getBoundingClientRect = () => ({top: 200, left: 120, height: 20});
@@ -103,7 +132,44 @@ function mount({scroll = 0, innerWidth = 1440, invalid = false, observer = true,
       if (sel === '[data-tip-title]') return [tipNode];
       return [];
     };
-    report.querySelectorAll = sel => sel === '[data-drawer-target]' ? [drawerTrigger] : [];
+    report.querySelectorAll = sel => {
+      if (sel === '[data-drawer-target]') return [drawerTrigger];
+      if (sel === 'table') return [table];
+      if (sel === '[data-agent-trace]') return [agentTrace];
+      return [];
+    };
+    traceBtnAll.attributes['data-trace-step'] = 'all';
+    traceBtnAll.attributes['data-main-pct'] = '6';
+    traceBtnAll.attributes['data-main-label'] = '+600 chars';
+    traceBtnAll.attributes['data-sub-pct'] = '0';
+    traceBtnAll.attributes['data-sub-ghost-pct'] = '92';
+    traceBtnAll.attributes['data-sub-label'] = 'peak 35k -> 0';
+    traceBtn1.attributes['data-trace-step'] = '1';
+    traceBtn1.attributes['data-main-pct'] = '0';
+    traceBtn1.attributes['data-main-label'] = '0';
+    traceBtn1.attributes['data-sub-pct'] = '90';
+    traceBtn1.attributes['data-sub-ghost-pct'] = '0';
+    traceBtn1.attributes['data-sub-label'] = '35k tok';
+    traceBtn2.attributes['data-trace-step'] = '2';
+    traceBtn2.attributes['data-main-pct'] = '6';
+    traceBtn2.attributes['data-main-label'] = '+600 chars';
+    traceBtn2.attributes['data-sub-pct'] = '0';
+    traceBtn2.attributes['data-sub-ghost-pct'] = '90';
+    traceBtn2.attributes['data-sub-label'] = 'released';
+    traceStage1.attributes['data-step'] = '1';
+    traceStage2.attributes['data-step'] = '2';
+    agentTrace.querySelectorAll = sel => {
+      if (sel === '[data-trace-step]') return [traceBtnAll, traceBtn1, traceBtn2];
+      if (sel === '.trace-stage[data-step]') return [traceStage1, traceStage2];
+      return [];
+    };
+    agentTrace.querySelector = sel => ({
+      '[data-meter-main-fill]': meterMainFill,
+      '[data-meter-main-text]': meterMainText,
+      '[data-meter-sub-fill]': meterSubFill,
+      '[data-meter-sub-ghost]': meterSubGhost,
+      '[data-meter-sub-text]': meterSubText
+    })[sel] || null;
   }
   outline.open=true; outline.children=[summary,nav];
   rail.children=[outline,progress]; progress.children=[value,bar];
@@ -148,8 +214,8 @@ function mount({scroll = 0, innerWidth = 1440, invalid = false, observer = true,
     const e={target,defaultPrevented:false,preventDefault(){this.defaultPrevented=true;},...data};
     target.listeners.get(name)(e);return e;
   }
-  return {document,window,report,outline,nav,summary,rail,progress,value,bar,main,links,sections,pending,timers,observed,mounted,themeToggle,citeLink,tipNode,drawerTrigger,drawerDetails,flush,runTimers,event,
-    fire(name){listeners.get(name)();},resizeContent(){resizeCallback();},
+  return {document,window,report,outline,nav,summary,rail,progress,value,bar,main,links,sections,pending,timers,observed,mounted,themeToggle,citeLink,tipNode,drawerTrigger,drawerDetails,tableScroll,table,thA,thB,agentTrace,traceBtnAll,traceBtn1,traceBtn2,traceStage1,traceStage2,meterMainFill,meterMainText,meterSubFill,meterSubGhost,meterSubText,flush,runTimers,event,
+    fire(name, e){listeners.get(name)(e);},resizeContent(){resizeCallback();},
     offset(){return document.documentElement.style.values['--reading-offset'];}};
 }
 
@@ -342,4 +408,65 @@ test('floating detail drawer supports hover-to-preview, click-to-pin toggle, id 
   ui.event(ui.document, 'keydown', {key:'Escape'});
   assert.equal(drawer.hidden, true);
   assert.equal(drawer.classList.contains('is-pinned'), false);
+});
+
+test('table column resizers support pointer drag width adjustment and double-click reset', () => {
+  const ui = mount({withExtras:true}); ui.flush();
+  const handleA = ui.thA.children[0];
+  assert.equal(handleA.className, 'col-resizer');
+  assert.equal(ui.thA.classList.contains('has-col-resizer'), true);
+
+  let stopped = false;
+  ui.event(handleA, 'pointerdown', {
+    button: 0,
+    clientX: 200,
+    stopPropagation() { stopped = true; }
+  });
+  assert.equal(stopped, true);
+  assert.equal(ui.table.style.tableLayout, 'fixed');
+  assert.equal(ui.tableScroll.classList.contains('has-resized-table'), true);
+  assert.equal(ui.document.documentElement.getAttribute('data-col-resizing'), 'true');
+
+  ui.fire('pointermove', {clientX: 320});
+  assert.equal(ui.thA.style.width, '320px');
+  assert.equal(ui.table.style.width, '520px');
+
+  ui.fire('pointerup');
+  assert.equal(ui.document.documentElement.getAttribute('data-col-resizing'), undefined);
+  assert.equal(handleA.classList.contains('is-dragging'), false);
+
+  ui.event(handleA, 'dblclick');
+  assert.equal(ui.thA.style.width, '');
+  assert.equal(ui.table.style.tableLayout, '');
+  assert.equal(ui.table.style.width, '');
+  assert.equal(ui.table.classList.contains('is-col-resized'), false);
+  assert.equal(ui.tableScroll.classList.contains('has-resized-table'), false);
+});
+
+test('agent trace stepper highlights swimlane rows, updates context meters, and toggles back to all', () => {
+  const ui = mount({withExtras:true}); ui.flush();
+  assert.equal(ui.agentTrace.getAttribute('data-active-step'), 'all');
+  assert.equal(ui.meterMainFill.style.width, '6%');
+  assert.equal(ui.meterSubGhost.style.width, '92%');
+  assert.equal(ui.traceStage1.classList.contains('is-dimmed'), false);
+
+  ui.event(ui.traceBtn1, 'click');
+  assert.equal(ui.agentTrace.getAttribute('data-active-step'), '1');
+  assert.equal(ui.traceBtn1.getAttribute('aria-pressed'), 'true');
+  assert.equal(ui.traceStage1.classList.contains('is-active'), true);
+  assert.equal(ui.traceStage2.classList.contains('is-dimmed'), true);
+  assert.equal(ui.meterSubFill.style.width, '90%');
+  assert.equal(ui.meterSubText.textContent, '35k tok');
+
+  ui.event(ui.traceBtn1, 'keydown', {key:'ArrowRight'});
+  assert.equal(ui.document.activeElement, ui.traceBtn2);
+  assert.equal(ui.agentTrace.getAttribute('data-active-step'), '2');
+  assert.equal(ui.meterSubFill.style.width, '0%');
+  assert.equal(ui.meterSubGhost.style.width, '90%');
+
+  // Clicking the already active stage row returns to the full overview
+  ui.event(ui.traceStage2, 'click', {target: ui.traceStage2});
+  assert.equal(ui.agentTrace.getAttribute('data-active-step'), 'all');
+  assert.equal(ui.traceStage1.classList.contains('is-dimmed'), false);
+  assert.equal(ui.traceStage2.classList.contains('is-active'), false);
 });

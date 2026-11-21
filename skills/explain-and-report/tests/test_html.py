@@ -52,6 +52,26 @@ class PreflightTests(unittest.TestCase):
         errors, warnings = check_html(html)
         self.assertEqual(errors, [])
         self.assertTrue(any('meta-commentary phrase detected' in w for w in warnings))
+    def test_corporate_buzzword_warns_outside_evidence_and_details(self):
+        html = BASE.replace('</main>', '<h2>通过四项正交抓手赋能主链路，立下百日攻坚军令状完成工具减脂与作战总图</h2></main>')
+        errors, warnings = check_html(html)
+        self.assertEqual(errors, [])
+        self.assertTrue(any('Corporate buzzword or campaign/slogan rhetoric detected in body prose' in w for w in warnings))
+        in_dl = BASE.replace('</main>', '<dl><dt id="C1">C1</dt><dd>会议原话：抓手、百日攻坚与作战图。</dd></dl></main>')
+        self.assertEqual(check_html(in_dl), ([], []))
+        in_details = BASE.replace('</main>', '<details><summary>Raw</summary><p>原始记录中的抓手、心智、减脂与军令状。</p></details></main>')
+        self.assertEqual(check_html(in_details), ([], []))
+    def test_dense_table_cell_without_list_warns(self):
+        semicolon_cell = BASE.replace('</main>', '<table><tbody><tr><td>第一项准备；第二项联调；第三项回归检查。</td></tr></tbody></table></main>')
+        errors, warnings = check_html(semicolon_cell)
+        self.assertEqual(errors, [])
+        self.assertTrue(any('format multi-item cells as ordered (<ol>) or unordered (<ul>) lists' in w for w in warnings))
+        long_cell = BASE.replace('</main>', '<table><tbody><tr><td>' + '这是一个很长的说明文本用来测试单格字数超限的情况，' * 5 + '</td></tr></tbody></table></main>')
+        self.assertTrue(any('format multi-item cells' in w for w in check_html(long_cell)[1]))
+        listed_cell = BASE.replace('</main>', '<table><tbody><tr><td><ul><li>第一项准备</li><li>第二项联调</li><li>第三项回归检查</li></ul></td></tr></tbody></table></main>')
+        self.assertEqual(check_html(listed_cell), ([], []))
+        in_details = BASE.replace('</main>', '<details><summary>Tbl</summary><table><tbody><tr><td>第一项；第二项；第三项。</td></tr></tbody></table></details></main>')
+        self.assertEqual(check_html(in_details), ([], []))
 
 if __name__ == '__main__':
     unittest.main()

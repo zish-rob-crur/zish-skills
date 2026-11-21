@@ -180,7 +180,7 @@ def init_run(workspace: Path, topic: str, root: Path | None = None,
         for sub in ('delivery', 'figures', 'qa/screenshots', 'publish'):
             (run / sub).mkdir(parents=True, mode=0o700)
         write_json(run / 'manifest.json', {
-            'schema_version': 1, 'skill_version': '0.5.1', 'run_id': run_id,
+            'schema_version': 1, 'skill_version': '0.5.3', 'run_id': run_id,
             'created_at': datetime.now(timezone.utc).isoformat(),
             'run_dir': str(run), 'storage_root': str(root), 'workspace': str(workspace),
             'skill_root': str(SKILL_ROOT), 'topic': topic,

@@ -296,6 +296,152 @@
     });
   }
 
+  function initTableColumnResize(doc, win, report) {
+    if (typeof report.querySelectorAll !== 'function' || typeof doc.createElement !== 'function') return;
+    const tables = Array.from(report.querySelectorAll('table'));
+    if (!tables.length) return;
+    let dragState = null;
+    let hasResizable = false;
+
+    function finishDrag() {
+      if (!dragState) return;
+      if (dragState.handle.classList) dragState.handle.classList.remove('is-dragging');
+      if (doc.documentElement && doc.documentElement.removeAttribute) doc.documentElement.removeAttribute('data-col-resizing');
+      dragState = null;
+    }
+
+    tables.forEach(table => {
+      const thead = table.querySelector && table.querySelector('thead');
+      const firstRow = thead && thead.querySelector && thead.querySelector('tr');
+      const ths = firstRow && firstRow.children ? Array.from(firstRow.children).filter(cell => cell.tagName === 'TH') : [];
+      if (ths.length < 2) return;
+      hasResizable = true;
+
+      ths.forEach((th, index) => {
+        if (th.classList) th.classList.add('has-col-resizer');
+        const handle = doc.createElement('span');
+        handle.className = 'col-resizer';
+        handle.setAttribute('aria-hidden', 'true');
+        handle.setAttribute('title', '拖动调整列宽 · 双击恢复默认');
+        th.appendChild(handle);
+
+        handle.addEventListener('pointerdown', event => {
+          if (event.button != null && event.button !== 0) return;
+          if (event.preventDefault) event.preventDefault();
+          if (event.stopPropagation) event.stopPropagation();
+          const widths = ths.map(cell => Math.max(64, Math.round((cell.getBoundingClientRect && cell.getBoundingClientRect().width) || 160)));
+          ths.forEach((cell, i) => {
+            if (cell.style) cell.style.width = `${widths[i]}px`;
+          });
+          if (table.style) {
+            table.style.tableLayout = 'fixed';
+            table.style.minWidth = '0';
+            table.style.width = `${widths.reduce((a, b) => a + b, 0)}px`;
+          }
+          if (table.classList) table.classList.add('is-col-resized');
+          if (table.parentNode && table.parentNode.classList && table.parentNode.classList.contains('table-scroll')) {
+            table.parentNode.classList.add('has-resized-table');
+          }
+          if (handle.classList) handle.classList.add('is-dragging');
+          if (doc.documentElement && doc.documentElement.setAttribute) doc.documentElement.setAttribute('data-col-resizing', 'true');
+          dragState = { table, ths, widths, index, startX: event.clientX || 0, startWidth: widths[index], handle };
+        });
+
+        handle.addEventListener('dblclick', event => {
+          if (event.preventDefault) event.preventDefault();
+          if (dragState && dragState.table === table) finishDrag();
+          ths.forEach(cell => {
+            if (cell.style) cell.style.width = '';
+          });
+          if (table.style) {
+            table.style.tableLayout = '';
+            table.style.width = '';
+            table.style.minWidth = '';
+          }
+          if (table.classList) table.classList.remove('is-col-resized');
+          if (table.parentNode && table.parentNode.classList) table.parentNode.classList.remove('has-resized-table');
+        });
+      });
+    });
+
+    if (!hasResizable) return;
+    win.addEventListener('pointermove', event => {
+      if (!dragState) return;
+      const nextWidth = Math.max(64, Math.round(dragState.startWidth + ((event.clientX || 0) - dragState.startX)));
+      dragState.widths[dragState.index] = nextWidth;
+      if (dragState.ths[dragState.index].style) dragState.ths[dragState.index].style.width = `${nextWidth}px`;
+      if (dragState.table.style) dragState.table.style.width = `${dragState.widths.reduce((a, b) => a + b, 0)}px`;
+    });
+    win.addEventListener('pointerup', finishDrag);
+    win.addEventListener('pointercancel', finishDrag);
+  }
+
+  function initAgentTraces(report) {
+    if (!report || !report.querySelectorAll) return;
+    Array.from(report.querySelectorAll('[data-agent-trace]')).forEach(trace => {
+      if (!trace.querySelectorAll) return;
+      const buttons = Array.from(trace.querySelectorAll('[data-trace-step]'));
+      const stages = Array.from(trace.querySelectorAll('.trace-stage[data-step]'));
+      if (!buttons.length || !stages.length) return;
+      const mainFill = trace.querySelector && trace.querySelector('[data-meter-main-fill]');
+      const mainText = trace.querySelector && trace.querySelector('[data-meter-main-text]');
+      const subFill = trace.querySelector && trace.querySelector('[data-meter-sub-fill]');
+      const subGhost = trace.querySelector && trace.querySelector('[data-meter-sub-ghost]');
+      const subText = trace.querySelector && trace.querySelector('[data-meter-sub-text]');
+
+      function applyStep(stepValue) {
+        const activeBtn = buttons.find(btn => btn.getAttribute('data-trace-step') === stepValue) || buttons[0];
+        const step = activeBtn.getAttribute('data-trace-step') || 'all';
+        buttons.forEach(btn => btn.setAttribute('aria-pressed', btn === activeBtn ? 'true' : 'false'));
+        trace.setAttribute('data-active-step', step);
+        stages.forEach(stage => {
+          const match = stage.getAttribute('data-step') === step;
+          if (stage.classList) {
+            stage.classList.toggle('is-active', step !== 'all' && match);
+            stage.classList.toggle('is-dimmed', step !== 'all' && !match);
+          }
+        });
+        const mainPct = activeBtn.getAttribute('data-main-pct');
+        const mainLabel = activeBtn.getAttribute('data-main-label');
+        const subPct = activeBtn.getAttribute('data-sub-pct');
+        const subGhostPct = activeBtn.getAttribute('data-sub-ghost-pct');
+        const subLabel = activeBtn.getAttribute('data-sub-label');
+        if (mainFill && mainFill.style && mainPct != null) mainFill.style.width = `${mainPct}%`;
+        if (mainText && mainLabel != null) mainText.textContent = mainLabel;
+        if (subFill && subFill.style && subPct != null) subFill.style.width = `${subPct}%`;
+        if (subGhost && subGhost.style) subGhost.style.width = `${subGhostPct || 0}%`;
+        if (subText && subLabel != null) subText.textContent = subLabel;
+      }
+
+      buttons.forEach((btn, idx) => {
+        btn.addEventListener('click', () => {
+          const targetStep = btn.getAttribute('data-trace-step') || 'all';
+          const current = trace.getAttribute('data-active-step') || 'all';
+          applyStep(targetStep !== 'all' && current === targetStep ? 'all' : targetStep);
+        });
+        btn.addEventListener('keydown', event => {
+          if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+          event.preventDefault();
+          const nextIdx = (idx + (event.key === 'ArrowRight' ? 1 : buttons.length - 1)) % buttons.length;
+          buttons[nextIdx].focus();
+          applyStep(buttons[nextIdx].getAttribute('data-trace-step') || 'all');
+        });
+      });
+
+      stages.forEach(stage => {
+        stage.addEventListener('click', event => {
+          const target = event && event.target;
+          if (target && target.closest && target.closest('a, button, summary, details')) return;
+          const stageStep = stage.getAttribute('data-step');
+          const current = trace.getAttribute('data-active-step') || 'all';
+          applyStep(current === stageStep ? 'all' : stageStep);
+        });
+      });
+
+      applyStep(trace.getAttribute('data-active-step') || 'all');
+    });
+  }
+
   function initReadingNavigation(doc, win) {
     const report = doc.querySelector('.report');
     if (!report || report.classList.contains('navigation-ready')) return false;
@@ -438,6 +584,8 @@
     initThemeToggle(doc, report);
     initCitationPreviews(doc, win, report, main);
     initFloatDrawer(doc, win, report, scheduleTimer, cancelTimer);
+    initTableColumnResize(doc, win, report);
+    initAgentTraces(report);
 
     report.classList.add('navigation-ready');
     progress.hidden = false;

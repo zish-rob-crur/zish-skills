@@ -13,7 +13,7 @@ Right below `.lead` in `.hero`, provide a 3- or 4-card `.summary-grid` so reader
 1. **Core Judgment / Decision (`.summary-card`)**: What is the answer or recommended choice? (`核心判断 / 决策`)
 2. **Decisive Evidence / Mechanism (`.summary-card.card-evidence`)**: Which single metric or invariant decides it? (`决定性依据 / 机制发现`)
 3. **Scope / Tradeoffs (`.summary-card.card-boundary`)**: What is the main cost, limitation, or unverified boundary? (`适用边界 / 样本口径`)
-4. **Core Attribution / Mechanism Takeaway (`.summary-card.card-retell`)**: Give the reader a crisp, memorable 1–2 sentence formulation (`核心归因结论` / `核心机制要旨`) they can articulate directly in a design review or team sync (e.g., *“先保文件交付率，再谈速度；同步的 29 秒只是剔除 8 次超时后的幸存者耗时。”*).
+4. **Core Attribution / Mechanism Takeaway (`.summary-card.card-retell`)**: Give the reader a plain, factual 1–2 sentence formulation (`核心归因结论` / `核心机制要旨`) they can repeat directly in a design review or team sync without slogan phrasing (e.g., *“先保文件交付率，再谈速度；同步的 29 秒只是剔除 8 次超时后的幸存者耗时。”*).
 
 ### Zero meta-commentary or UI tutorial leaks (严禁元评论与 UI 操作说明渗入正文)
 
@@ -40,7 +40,7 @@ When summarizing an architecture convergence proposal, multi-round review, or la
 1. **What is the current conflict / divergence? (现状分歧在哪？)** — Compress scattered code differences into 4–5 high-level architectural dimensions.
 2. **What is the core adjudication and why? (核心裁决与取舍依据是什么？)** — Group related review findings into 3–4 decisive architectural rulings, showing *what breaks without the ruling* vs. *how the ruling resolves it*.
 3. **What do we keep, merge, or drop? (保留什么、合并什么、舍弃什么？)** — Present a scannable capability retention matrix so stakeholders immediately see that hard-won business assets are preserved while redundant plumbing is dropped.
-4. **How does it land safely? (如何分步落地与兜底？)** — Summarize rollout stages and verification guardrails without dumping raw implementation tickets.
+4. **What happens next, in what order, and what verifies or reverses it? (下一步先做什么、按什么顺序推进、如何验收或改选？)** — Close ADR, migration, and evaluation reports with a dedicated section using `<ol class="steps">` (`Step 1 前置实测与核验` → `Step 2 核心改动` → `Step 3 灰度与验收门槛` → `Step 4 旧逻辑清理或改选条件`) before the appendices; omit action checklists only for purely explanatory reports.
 
 ### Control code-symbol density, telegraphic cells, and bold restraint (控制代码密度 · 表格电报体 · 克制加粗)
 
@@ -48,9 +48,10 @@ A report becomes unreadable when every sentence and table cell is packed with fi
 
 - **Human domain language first (`先讲人话，后附代码定位`)**: In `.prose` paragraphs and section headings, name the **business role or system behavior** (e.g., *“三态预览闸门（通过 / 警告 / 阻断）”* instead of *“`preview_status` enum `pass|warn|block` in `ActionPlanResponse`”*). Keep inline `<code>` tags in main `.prose` paragraphs to **at most 1–2 essential named concepts per paragraph** (`check_report.py` warns at `>=6`); never inline full file paths or multi-argument signatures in the main narrative.
 - **Sink code-level mechanics into `<details>`, `.sidenote`, or Appendices**: Place exact file paths, line numbers, function call chains, and field-by-field schema mappings in a collapsible `<details><summary>查看代码级映射与实现约束</summary>...</details>` block (optionally linked via `data-drawer-target` jump pills), an adjacent `.sidenote`, or the Appendix `<dl class="evidence-list">` (`[C1]`–`[Cn]`).
-- **Telegraphic 5-second scannable tables**:
+- **Telegraphic & list-structured 5-second scannable tables**:
   - Group 8–12 granular differences into **4–6 conceptual rows**.
-  - Restrict each comparison `<td>` cell to: **`[Optional .badge]` + `<strong>≤8 字核心结论</strong>` + `one concise sentence (≤40 chars)` + `[optional .jump-pill / cite-ref]`**. Use `.table-scroll.table-tall` for tall reference tables so sticky headers stay anchored.
+  - For single-point cells, write: **`[Optional .badge]` + `<strong>≤8 字核心结论</strong>` + `one concise sentence (≤40 chars)` + `[optional .jump-pill / cite-ref]`**.
+  - **Use `<ul>` / `<ol>` inside multi-item `<td>` cells (`表格多条内容用列表，不用分号段落墙`)**: Whenever a cell lists 2+ deliverables, acceptance conditions, rules, or sequential steps (common in roadmap/role matrices), split them into a compact `<ul>` (parallel items) or `<ol>` (ordered steps or priority tiers) inside `<td>` instead of joining clauses with `；`. `check_report.py` warns when an unlisted `<td>` packs `>=2` semicolons or exceeds 110 characters. Use `.table-scroll.table-tall` for tall reference tables so sticky headers stay anchored.
   - Use semantic `.badge` tags in retention/decision tables (`.status-success` for **保留 / Keep**, `.status-proposed` for **合并收敛 / Merge**, `.status-error` for **废弃移除 / Drop**, `.status-warning` for **前置护栏 / Guardrail**) so readers can scan the entire decision matrix in seconds.
 - **Bold restraint (`粗体克制`)**: Bold at most **1–2 pivotal judgment or causal-turning phrases per `.prose` paragraph**. Never bold whole sentences or plain lists of component names; use `<mark>` strictly for decisive metric numbers or failure breakpoints.
 
@@ -62,6 +63,10 @@ Adapted from `writing-clearly-and-concisely` (William Strunk Jr., *The Elements 
   - **At most two `的` layers before a noun/verb.** Split long pre-verbal condition modifiers into a standalone background sentence first, then state the action/outcome in the next sentence (instead of stuffing a 40-character nested `针对……的……这一……的修正` clause into one breath).
   - **Use direct verbs instead of weak nominalizations.** Replace `对 X 进行了合并 / 实现了 Y 的打通 / 开展针对 Z 的核验` with `合并 X / 跑通 Y / 核对 Z`.
   - **Cut false rhetorical contrasts and coined jargon.** Remove `不是简单的 X，而是 Y` / `不仅……更是……` unless correcting an explicit reader misconception, and replace ad-hoc hyphenated buzzwords with their concrete operational meaning.
+- **Calm, plain engineering Chinese — ban corporate buzzwords, campaign slogans, and slang metaphors (`冷静平实的工程汉语：严禁汇报黑话、运动/军事口号与戏谑比喻`):** Never put management jargon, wartime/campaign mobilization phrasing, or colloquial metaphors in titles, headings, cards, prose, tables, or captions. Always use literal engineering wording:
+  - **Corporate/PM buzzwords:** `抓手` → `具体改法 / 优化项`, `赋能` → `支持 / 省去`, `闭环` → `完整流程`, `打通` → `接通 / 共用`, `底座 / 事实底座` → `共用模块 / 底层表`, `心智` → `用户理解 / 预期`, `水位` → `占比 / 耗时`, `颗粒度` → `拆分粗细 / 字段范围`, `组合拳` → `配合改动`, `拉齐` → `统一口径`, `透出` → `展示 / 返回`, `看护` → `持续检查 / 回归测试`, `物化` → `创建 / 落盘`, `沉淀` → `定下 / 整理`, `正交 / 正交优化` → `互不影响 / 独立优化`.
+  - **Campaign & military rhetoric:** `攻坚 / 百日攻坚` → `阶段复盘 / 重点改进`, `作战图 / 作战总图 / 作战分工 / 挂图作战` → `架构全景 / 推进排期 / 角色分工`, `军令状 / 决战 / 会战 / 冲锋` → `交付目标 / 排期计划`, `集中火力拿下` → `优先完成`, `收官月 / 总收官 / 满载推进` → `本阶段 / 四周排期`, `铁律 / 严防回潮` → `约束规则 / 避免重复引入`.
+  - **Slang & fitness metaphors:** `减脂 / 大减脂 / 瘦身` → `删减代码 / 精简工具`, `手搓` → `自行实现 / 硬编码`, `铺新摊子 / 清空历史包袱` → `扩大范围 / 清理遗留代码`.
 - **Dual-level assertion headings (`目录短词定位 + 正文 h2 观点判断句`)**:
   - Keep bottom-left TOC `<nav>` links short (`4–8 字`, e.g., `01 交付门槛`) so the menu fits cleanly.
   - Write **every body `<h2>` as a complete, self-contained assertion sentence** (`01 同步方案丢失 8 次大规模文件，未达交付门槛`) so a busy reader scanning only `<h2>` headings in 10 seconds recovers the complete argument chain.
@@ -78,7 +83,7 @@ Adapted from `writing-clearly-and-concisely` (William Strunk Jr., *The Elements 
 
 Introduce unfamiliar terms where readers first need them, including labels in the first diagram. Keep production language such as “now explain the mechanism” out of the report.
 
-When an ADR or decision is needed, state the recommended choice, the evidence that determines it, the tradeoffs accepted, and the concrete condition that would change the choice. For implementation advice, also name the observable result that would verify the change. Do not invent owners, dates, or action lists for a purely explanatory report.
+When an ADR or decision is needed, state the recommended choice, the evidence that determines it, the tradeoffs accepted, ordered technical next steps with verification gates (`<ol class="steps">`), and the concrete condition that would change the choice—without fabricating unprovided assignees or calendar dates. Omit action lists only for purely explanatory reports.
 
 ## 3. Edit prose and figures together
 
@@ -122,7 +127,9 @@ Useful fields include event ID, task/call ID, actor, event type, available times
 Without timestamps, show only known partial ordering and label it “order illustration, not elapsed time” (preferably in a `.sidenote`); do not invent millisecond scales.
 Cross-host timestamps may use different clocks. Without confirmed alignment, tiny time differences do not establish causality.
 
-Use multiple swimlanes for parallel work. Do not add overlapping durations to obtain end-to-end time.
+Use multiple swimlanes for parallel or delegated agent work. Do not add overlapping durations to obtain end-to-end time, and do not flatten multi-actor agent delegation into two-column `.turn-row` prose cards:
+- **Use `.trace-stream` / `.turn-row` only for single-session turn logs or dialogue sample annotations** (left: verbatim turn/event, right: short diagnostic note).
+- **Use `.agent-trace[data-agent-trace]` (three-swimlane causal trace + context meter) when explaining Multi-Agent, Subagent, or Tool-loop execution:** place **Persistent Session** in Lane 1 (leaving empty lifeline space during subagent execution so isolation is spatially obvious), **Ephemeral Subagent / Loop** in Lane 2 (enclosed in `.in-sandbox` dashed borders from `.sub-start` to `.sub-end`), and **Deterministic Tools / Data** in Lane 3. Connect each step's observation chips (`.trace-bucket.is-dropped` / `.is-kept` or `.trace-finding`) to the next call via an inline `.trace-thought` bridge instead of a separate right-hand commentary column, and pair with `.trace-toolbar` (`[data-trace-step]` pills + `[data-meter-*]` bars, defaulting to `all`).
 Distinguish cancellation requested, cancellation received, last write, playback-stop confirmation, and the boundary of what the user actually heard.
 Keep late events, failures, retries, and skipped steps visible with their statuses; do not show only the success path.
 
@@ -145,6 +152,8 @@ Use the shell's native `details` outline, `.masthead` theme toggle button (`[dat
   - **Hover-to-preview & Click-to-pin Detail Drawer (`.explorer-float-drawer`)**: Any `.jump-pill` or anchor with `data-drawer-target="target-id"` opens a bottom-right preview drawer (`right: 20px; bottom: 20px`) on hover without scrolling the page, and pins on click (`已固定`, toggleable or via `Escape`) so readers can inspect diffs, dialog traces, or raw evidence alongside the main narrative.
   - Clicking `[data-theme-toggle]` switches between the default dark charcoal theme and the warm-paper light theme (`html[data-theme="light"]`).
   - Citation anchors (`a[href^="#C"]` / `a.cite-ref`) render as low-noise gray micro-pills so orange accents stay reserved for key takeaways; hovering or focusing them (or `[data-tip-title]` elements) displays an **inline `.cite-popover` tooltip** without losing scroll position.
+  - Multi-column tables with a `<thead>` receive `.col-resizer` handles along column right edges for drag-resizing column widths (double-clicking the divider restores automatic table layout; `.col-resizer` hides cleanly in print).
+  - Agent trace blocks (`[data-agent-trace]`) wire `[data-trace-step]` buttons (including `ArrowLeft`/`ArrowRight`) and `.trace-stage[data-step]` rows to highlight individual steps while updating `[data-meter-main-*]` and `[data-meter-sub-*]` context gauges; clicking an active step returns to the full `all` view.
 
 ### Evidence images
 

@@ -12,6 +12,13 @@ from apply_report_theme import THEME_PATH, check_theme
 
 class ReportParser(HTMLParser):
     BANNED_META_PHRASES = ('悬浮目录', '一句话怎么讲', '鼠标悬停即可', '鼠标悬浮即可', '点击切换查看', '交互切换查看')
+    BANNED_BUZZWORDS = (
+        '抓手', '赋能', '组合拳', '颗粒度', '拉齐', '透出', '心智', '看护',
+        '事实底座', '能力底座', '执行底座', '生态闭环', '评测闭环', '正交优化', '正交提速',
+        '攻坚', '作战图', '作战总图', '作战分工', '挂图作战', '作战室', '军令状',
+        '集中火力', '决战', '会战', '冲锋', '吹响', '铁律', '严防回潮',
+        '总收官', '收官月', '满载推进', '减脂', '大减脂', '瘦身', '手搓', '铺新摊子',
+    )
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
@@ -22,13 +29,17 @@ class ReportParser(HTMLParser):
         self.in_title = False
         self.in_details = 0
         self.in_dl = 0
+        self.in_code_or_pre = 0
         self.in_svg = 0
         self.in_script_or_style = 0
         self.svg_text_buf: list[str] | None = None
         self.long_svg_labels = 0
         self.visible_text_parts: list[str] = []
+        self.body_prose_text_parts: list[str] = []
         self.block_code_counts: list[tuple[str, int]] = []
         self.high_code_blocks = 0
+        self.td_stack: list[dict[str, object]] = []
+        self.dense_unlisted_cells = 0
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         d = {key: value or '' for key, value in attrs}
@@ -47,11 +58,17 @@ class ReportParser(HTMLParser):
             self.in_details += 1
         if tag == 'dl':
             self.in_dl += 1
+        if tag in {'code', 'pre'}:
+            self.in_code_or_pre += 1
         if tag in {'p', 'td'} and not self.in_details and not self.in_dl:
             self.block_code_counts.append((tag, 0))
         if tag == 'code' and self.block_code_counts and not self.in_details and not self.in_dl:
             btag, count = self.block_code_counts[-1]
             self.block_code_counts[-1] = (btag, count + 1)
+        if tag == 'td' and not self.in_details:
+            self.td_stack.append({'parts': [], 'has_list': False})
+        if tag in {'ul', 'ol'} and self.td_stack:
+            self.td_stack[-1]['has_list'] = True
         if tag in {'iframe', 'object', 'embed', 'base'}:
             self.errors.append(f'Unsupported embedded/redirecting resource: <{tag}>')
         for attr in ('src', 'poster', 'srcset'):
@@ -95,10 +112,18 @@ class ReportParser(HTMLParser):
             self.in_details -= 1
         if tag == 'dl' and self.in_dl > 0:
             self.in_dl -= 1
+        if tag in {'code', 'pre'} and self.in_code_or_pre > 0:
+            self.in_code_or_pre -= 1
         if tag in {'p', 'td'} and self.block_code_counts and self.block_code_counts[-1][0] == tag:
             _, count = self.block_code_counts.pop()
             if count >= 6:
                 self.high_code_blocks += 1
+        if tag == 'td' and self.td_stack:
+            cell = self.td_stack.pop()
+            if not cell['has_list']:
+                plain = re.sub(r'\s+', ' ', ''.join(cell['parts'])).strip()  # type: ignore[arg-type]
+                if plain.count('；') >= 2 or len(plain) > 110:
+                    self.dense_unlisted_cells += 1
 
     def handle_data(self, data: str) -> None:
         if self.in_title:
@@ -107,6 +132,10 @@ class ReportParser(HTMLParser):
             self.svg_text_buf.append(data)
         if not self.in_script_or_style:
             self.visible_text_parts.append(data)
+            if not self.in_details and not self.in_dl and not self.in_code_or_pre:
+                self.body_prose_text_parts.append(data)
+            if self.td_stack:
+                self.td_stack[-1]['parts'].append(data)  # type: ignore[union-attr]
 
 
 def check_html(text: str) -> tuple[list[str], list[str]]:
@@ -157,6 +186,11 @@ def check_html(text: str) -> tuple[list[str], list[str]]:
             f'{parser.high_code_blocks} prose/table block(s) contain >=6 inline <code> tags; '
             'prefer human domain terms in main prose/tables and move file paths, signatures, or schema fields to <details>, .sidenote, or appendix'
         )
+    if parser.dense_unlisted_cells:
+        warnings.append(
+            f'{parser.dense_unlisted_cells} table cell(s) pack multi-clause or long text without <ul>/<ol>; '
+            'format multi-item cells as ordered (<ol>) or unordered (<ul>) lists'
+        )
     if parser.long_svg_labels:
         warnings.append(
             f'{parser.long_svg_labels} SVG <text> label(s) exceed 36 characters; '
@@ -167,6 +201,12 @@ def check_html(text: str) -> tuple[list[str], list[str]]:
     if found_meta:
         warnings.append(
             f'UI tutorial or meta-commentary phrase detected in visible report text ({", ".join(found_meta)}); describe the subject only'
+        )
+    body_prose_text = ''.join(parser.body_prose_text_parts)
+    found_buzzwords = [word for word in ReportParser.BANNED_BUZZWORDS if word in body_prose_text]
+    if found_buzzwords:
+        warnings.append(
+            f'Corporate buzzword or campaign/slogan rhetoric detected in body prose ({", ".join(found_buzzwords)}); rewrite in calm, literal engineering terms'
         )
     if len(text.encode('utf-8')) > 2_000_000:
         warnings.append('File exceeds 2 MB; check whether raw logs or assets can be reduced')

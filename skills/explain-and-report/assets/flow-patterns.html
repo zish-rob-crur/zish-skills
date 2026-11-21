@@ -219,6 +219,68 @@ p { margin: 0 0 16px; }
 .turn-text { margin: 0; font-size: 14px; line-height: 1.65; color: var(--ink); }
 .turn-note { font-size: 13px; line-height: 1.6; color: var(--muted); padding: 10px 12px; background: var(--raised); border-radius: 6px; border: 1px solid var(--line); }
 .turn-note strong { display: block; color: var(--ink); margin-bottom: 4px; font-size: 12.5px; }
+.agent-trace { display: flex; flex-direction: column; gap: 14px; }
+.trace-toolbar { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(260px, 1fr); gap: 14px 20px; align-items: center; padding: 12px 14px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); }
+.trace-steps { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.trace-step-btn { padding: 5px 10px; font: 600 12px/1.4 var(--font); border-radius: 999px; background: var(--paper); color: var(--muted); border: 1px solid var(--line); }
+.trace-step-btn:hover { color: var(--ink); border-color: var(--accent); }
+.trace-step-btn[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.trace-meters { display: flex; flex-direction: column; gap: 8px; padding: 8px 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; }
+.trace-meter-row { display: grid; grid-template-columns: 7.5rem minmax(80px, 1fr) auto; gap: 10px; align-items: center; font-size: 12px; line-height: 1.4; }
+.trace-meter-name { font-weight: 650; color: var(--ink); white-space: nowrap; }
+.trace-meter-track { position: relative; height: 9px; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.trace-meter-ghost { position: absolute; inset: 0 auto 0 0; width: 0; border-right: 1.5px dashed var(--info); background: repeating-linear-gradient(135deg, transparent 0 4px, var(--info-soft) 4px 8px); transition: width .22s ease; }
+.trace-meter-fill { position: relative; height: 100%; width: 0; border-radius: 999px; transition: width .22s ease; }
+.trace-meter-fill.fill-main { background: var(--success); }
+.trace-meter-fill.fill-sub { background: var(--info); }
+.trace-meter-val { font: 600 11.5px/1.35 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.trace-lanes-head, .trace-stage { display: grid; grid-template-columns: minmax(210px, 1.05fr) minmax(280px, 1.45fr) minmax(215px, 1.1fr); gap: 0 14px; }
+.trace-lane-title { padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); }
+.trace-lane-title.lane-main { border-top: 3px solid var(--accent); }
+.trace-lane-title.lane-sub { border-top: 3px dashed var(--info); background: var(--info-soft); }
+.trace-lane-title.lane-tool { border-top: 3px solid var(--success); }
+.trace-lane-title strong { display: block; font-size: 13.5px; color: var(--ink); margin-top: 2px; }
+.trace-lane-title span.lane-subtext { display: block; font-size: 12px; color: var(--muted); line-height: 1.45; margin-top: 2px; }
+.trace-swimlanes { display: flex; flex-direction: column; }
+.trace-stage { align-items: stretch; transition: opacity .16s ease; cursor: pointer; border-radius: var(--radius); }
+.trace-stage.is-dimmed { opacity: .34; }
+.trace-stage.is-dimmed:hover { opacity: .74; }
+.trace-stage.is-active { outline: 2px solid var(--accent); outline-offset: 3px; }
+.trace-cell { position: relative; padding: 8px 0; display: flex; flex-direction: column; justify-content: flex-start; min-width: 0; }
+.trace-cell.cell-main::before, .trace-cell.cell-tool::before { content: ""; position: absolute; top: 0; bottom: 0; left: 18px; width: 2px; background: var(--line); z-index: 0; }
+.trace-cell.cell-tool::before { border-left: 1.5px dotted var(--line); background: none; width: 0; }
+.trace-cell.cell-sub.in-sandbox { padding: 8px 12px; background: var(--bg); background: color-mix(in srgb, var(--info-soft) 38%, var(--paper)); border-left: 1.5px dashed var(--info); border-right: 1.5px dashed var(--info); }
+.trace-cell.cell-sub.sub-start { border-top: 1.5px dashed var(--info); border-top-left-radius: var(--radius); border-top-right-radius: var(--radius); padding-top: 12px; }
+.trace-cell.cell-sub.sub-end { border-bottom: 1.5px dashed var(--info); border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius); padding-bottom: 12px; }
+.trace-idle-note { position: relative; z-index: 1; margin: 6px 0 0 8px; align-self: flex-start; padding: 3px 9px; font: 11.5px/1.4 var(--mono); color: var(--muted); background: var(--paper); border: 1px dashed var(--line); border-radius: 999px; }
+.trace-card { position: relative; z-index: 1; padding: 11px 13px; background: var(--paper); border: 1px solid var(--line); border-radius: 7px; font-size: 13.5px; line-height: 1.6; }
+.trace-card.card-main { border-left: 3px solid var(--accent); }
+.trace-card.card-sub { border-left: 3px solid var(--info); }
+.trace-card.card-tool { border-left: 3px solid var(--success); background: var(--raised); }
+.trace-card.card-destroy { border: 1.5px solid var(--success); background: var(--success-soft); }
+.trace-card-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px 10px; margin-bottom: 6px; }
+.trace-card-head strong { font-size: 13.5px; color: var(--ink); }
+.trace-metric { font: 600 11px/1.35 var(--mono); padding: 1px 7px; border-radius: 999px; background: var(--raised); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.trace-metric.metric-zero { color: var(--success); background: var(--success-soft); border-color: var(--success); }
+.trace-metric.metric-peak { color: var(--warn); background: var(--warn-bg); border-color: var(--warn); }
+.trace-user-prompt { margin: 0 0 8px; padding: 6px 10px; background: var(--raised); border-radius: 5px; font-size: 13px; color: var(--ink); border-left: 2px solid var(--muted); }
+.trace-calls { display: flex; flex-direction: column; gap: 5px; margin: 6px 0; }
+.trace-call { padding: 5px 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 5px; font: 12px/1.5 var(--mono); color: var(--ink); overflow-wrap: anywhere; }
+.trace-buckets { display: flex; flex-wrap: wrap; gap: 6px; margin: 7px 0; }
+.trace-bucket { padding: 2px 8px; border-radius: 4px; font: 600 12px/1.45 var(--mono); border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.trace-bucket.is-dropped { color: var(--muted); text-decoration: line-through; opacity: .75; border-style: dashed; }
+.trace-bucket.is-kept { color: var(--success); background: var(--success-soft); border-color: var(--success); }
+.trace-finding { margin: 7px 0; padding: 7px 10px; background: var(--error-soft); border-left: 3px solid var(--error); border-radius: 4px; font-size: 12.5px; line-height: 1.55; color: var(--ink); }
+.trace-finding strong { color: var(--error); display: block; font-size: 12px; font-family: var(--mono); margin-bottom: 2px; }
+.trace-thought { margin: 7px 0 0; padding: 6px 10px; background: var(--raised); border-left: 2.5px solid var(--info); border-radius: 0 5px 5px 0; font-size: 12.5px; line-height: 1.55; color: var(--ink); }
+.trace-thought strong { color: var(--info); font-family: var(--mono); font-size: 11.5px; margin-right: 4px; }
+.trace-hop { display: inline-block; margin-top: 7px; padding: 2px 8px; border-radius: 4px; font: 600 11.5px/1.4 var(--mono); color: var(--accent); background: var(--accent-soft); }
+.trace-hop.hop-return { color: var(--success); background: var(--success-soft); }
+.trace-receipt-list { margin: 6px 0; padding-left: 1.2rem; font-size: 13px; line-height: 1.55; }
+.trace-receipt-list li { margin: 3px 0; }
+.trace-routes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.trace-route-pill { padding: 4px 9px; border-radius: 5px; font-size: 12px; line-height: 1.45; background: var(--raised); border: 1px solid var(--line); color: var(--ink); }
+.trace-mobile-lane { display: none; font: 600 11px/1.3 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
 .chart-legend { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; margin: 0 0 14px; padding: 10px 14px; background: var(--raised); border: 1px solid var(--line); border-radius: var(--radius); font-size: 13px; color: var(--ink); }
 .legend-item { display: inline-flex; align-items: center; gap: 8px; }
 .legend-swatch { width: 22px; height: 3px; border-radius: 2px; display: inline-block; position: relative; background: currentColor; }
@@ -239,7 +301,7 @@ svg text { font-family: var(--font); fill: var(--ink); }
 .diagram-scroll svg { width: 100%; min-width: var(--diagram-min, 640px); max-width: var(--diagram-max, 1080px); margin-inline: auto; }
 .table-scroll.table-tall { max-height: 72vh; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius); }
 @media (min-width: 1024px) {
-  .table-scroll:not(.table-wide):not(.table-tall) { overflow-x: visible; }
+  .table-scroll:not(.table-wide):not(.table-tall):not(.has-resized-table) { overflow-x: visible; }
 }
 .node { fill: var(--raised); stroke: var(--muted); stroke-width: 1.5; }
 .node-key { fill: var(--accent-soft); stroke: var(--accent); }
@@ -256,6 +318,17 @@ th { background: var(--paper); font-weight: 650; }
 thead th { position: sticky; top: 0; z-index: 2; border-bottom: 2px solid var(--line); }
 tbody th[scope="row"] { background: var(--bg); font-weight: 650; }
 tbody tr:hover, tbody tr:hover th[scope="row"] { background: var(--raised); }
+td > :first-child { margin-top: 0; }
+td > :last-child { margin-bottom: 0; }
+td ul, td ol { margin: 5px 0 0; padding-left: 1.2rem; }
+td li { margin: 3px 0; line-height: 1.55; }
+td li::marker { color: var(--accent); font-weight: 600; }
+.table-scroll.has-resized-table { overflow-x: auto; }
+thead th.has-col-resizer { padding-right: 18px; }
+.col-resizer { position: absolute; top: 0; right: 0; bottom: 0; width: 8px; cursor: col-resize; user-select: none; touch-action: none; z-index: 4; }
+.col-resizer::after { content: ""; position: absolute; top: 6px; bottom: 6px; right: 1px; width: 2px; border-radius: 1px; background: transparent; transition: background .12s; }
+thead th:hover > .col-resizer::after, .col-resizer:hover::after, .col-resizer.is-dragging::after { background: var(--accent); }
+html[data-col-resizing="true"], html[data-col-resizing="true"] * { cursor: col-resize !important; user-select: none !important; }
 .numeric { font-variant-numeric: tabular-nums; }
 .cite-popover { position: fixed; z-index: 48; max-width: min(26rem, calc(100vw - 32px)); padding: 12px 14px; background: var(--paper); color: var(--ink); border: 1px solid var(--accent); border-radius: var(--radius); box-shadow: var(--shadow-pop); font-size: 13px; line-height: 1.6; pointer-events: none; }
 .cite-popover strong { color: var(--accent); font-family: var(--mono); display: block; margin-bottom: 4px; }
@@ -280,7 +353,14 @@ button:disabled { opacity: .55; cursor: default; }
 footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; padding-top: 18px; margin-top: 24px; }
 [hidden] { display: none !important; }
 @media (max-width: 960px) {
-  .with-sidenote { grid-template-columns: 1fr; gap: 12px; }
+  .with-sidenote, .trace-toolbar { grid-template-columns: 1fr; gap: 12px; }
+  .trace-lanes-head { display: none; }
+  .trace-stage { grid-template-columns: 1fr; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .trace-cell { padding: 0; }
+  .trace-cell.cell-main::before, .trace-cell.cell-tool::before, .trace-cell:empty, .trace-idle-note { display: none; }
+  .trace-cell.cell-sub.in-sandbox { border: 1.5px dashed var(--info); border-radius: var(--radius); padding: 10px; }
+  .trace-mobile-lane { display: block; }
+  .trace-meter-row { grid-template-columns: 6.5rem minmax(60px, 1fr) auto; }
 }
 @media (max-width: 760px) {
   .report, .report.reading-report { padding: 20px 20px 48px; }
@@ -308,7 +388,9 @@ footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 12px
   .report, .report.reading-report, .report.navigation-ready { padding: 0; max-width: none; }
   .reading-layout { display: block; }
   .reading-layout > main { max-width: none; }
-  .reading-rail, .cite-popover, .explorer-float-drawer { display: none !important; }
+  .reading-rail, .cite-popover, .explorer-float-drawer, .col-resizer, .trace-steps { display: none !important; }
+  .trace-toolbar { grid-template-columns: 1fr; }
+  .trace-stage, .trace-stage.is-dimmed { opacity: 1 !important; outline: none !important; }
   nav, .skip, button { display: none !important; }
   h1 { font-size: 26pt; }
   h2 { font-size: 18pt; }
@@ -317,6 +399,7 @@ footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 12px
   details > * { display: block !important; }
   .diagram-scroll, .table-scroll, pre { overflow: visible; }
   .table-scroll.table-tall { max-height: none; border: 0; }
+  table.is-col-resized { width: 100% !important; table-layout: auto !important; }
   .diagram-scroll svg { min-width: 0; max-width: none; }
   pre { white-space: pre-wrap; }
 }
@@ -333,7 +416,7 @@ footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 12px
 <aside class="reading-rail" aria-label="阅读导航">
 <details class="report-outline" open>
 <summary>目录</summary>
-<nav aria-label="目录"><a href="#overview">01 任务结构</a><a href="#inputs">02 输入与分支</a><a href="#boundary">03 汇总边界</a></nav>
+<nav aria-label="目录"><a href="#overview">01 任务结构</a><a href="#inputs">02 输入与分支</a><a href="#boundary">03 汇总边界</a><a href="#agent-trace">04 委托轨迹</a></nav>
 </details>
 <div class="reading-progress" data-reading-progress hidden>
 <div class="reading-progress-label"><span>阅读进度</span><output data-reading-value aria-live="off">0%</output></div>
@@ -419,6 +502,199 @@ footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 12px
 </div>
 </div>
 <figcaption id="boundary-desc">图 3 · 逐项结果、整批要求和归档记录是三个独立输入；虚线框标出候选验收职责。A、B、C 均通过，但归档记录缺失，因此输出“归档待核实”。缺少记录也不能反推出“尚未归档”。</figcaption>
+</figure></section>
+
+<section class="report-section" id="agent-trace">
+<div class="section-heading"><span class="section-number">04</span><h2>批量原始日志在临时子代理内抽检消化，主会话仅接收结构化回执</h2></div>
+<div class="prose">
+<p>当单次排查需要抽读成批原始记录时，主协调 Agent 将只读检索委托给临时子代理：大体积原始文本在中间泳道内完成筛选与比对后原地释放，主会话仅保留几百字结论与证据编号。</p>
+</div>
+<figure data-figure-id="delegated-agent-trace">
+<div class="figure-stage">
+  <div class="agent-trace" data-agent-trace data-active-step="all">
+    <div class="trace-toolbar">
+      <div class="trace-steps" role="toolbar" aria-label="运行轨迹步骤">
+        <button type="button" class="trace-step-btn" data-trace-step="all" aria-pressed="true"
+          data-main-pct="5" data-main-label="+~450 字（持久保留）"
+          data-sub-pct="0" data-sub-ghost-pct="88" data-sub-label="峰值 2.8 万 tok → 结束归零">全景</button>
+        <button type="button" class="trace-step-btn" data-trace-step="1" aria-pressed="false"
+          data-main-pct="0" data-main-label="0 新增（仅发出委托目标）"
+          data-sub-pct="4" data-sub-ghost-pct="0" data-sub-label="初始化（~250 tok）">① 委托排查</button>
+        <button type="button" class="trace-step-btn" data-trace-step="2" aria-pressed="false"
+          data-main-pct="0" data-main-label="0 新增（未拉取原始日志）"
+          data-sub-pct="8" data-sub-ghost-pct="0" data-sub-label="分桶计数回执（~500 tok）">② 分桶计数</button>
+        <button type="button" class="trace-step-btn" data-trace-step="3" aria-pressed="false"
+          data-main-pct="0" data-main-label="0 新增（原始日志隔离在外）"
+          data-sub-pct="88" data-sub-ghost-pct="0" data-sub-label="峰值 2.8 万 tok（15 条明细 + 规则）">③ 抽样精读</button>
+        <button type="button" class="trace-step-btn" data-trace-step="4" aria-pressed="false"
+          data-main-pct="5" data-main-label="+~450 字结构化结论"
+          data-sub-pct="0" data-sub-ghost-pct="88" data-sub-label="0（已释放 2.8 万 tok）">④ 销毁回写</button>
+      </div>
+      <div class="trace-meters" aria-label="主会话与子代理上下文占用对比">
+        <div class="trace-meter-row">
+          <span class="trace-meter-name">主会话 Context</span>
+          <div class="trace-meter-track"><div class="trace-meter-fill fill-main" data-meter-main-fill style="width: 5%"></div></div>
+          <span class="trace-meter-val" data-meter-main-text>+~450 字（持久保留）</span>
+        </div>
+        <div class="trace-meter-row">
+          <span class="trace-meter-name">子代理临时沙盒</span>
+          <div class="trace-meter-track">
+            <div class="trace-meter-ghost" data-meter-sub-ghost style="width: 88%"></div>
+            <div class="trace-meter-fill fill-sub" data-meter-sub-fill style="width: 0%"></div>
+          </div>
+          <span class="trace-meter-val" data-meter-sub-text>峰值 2.8 万 tok → 结束归零</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="trace-lanes-head" aria-hidden="true">
+      <div class="trace-lane-title lane-main">
+        <span class="badge status-proposed">MAIN SESSION</span>
+        <strong>主协调 Agent</strong>
+        <span class="lane-subtext">持久会话历史 · 持有写操作审批门禁</span>
+      </div>
+      <div class="trace-lane-title lane-sub">
+        <span class="badge status-proposed">SUBAGENT · EPHEMERAL</span>
+        <strong>只读排查子代理 · log_inspector</strong>
+        <span class="lane-subtext">零写权限 · 独立即用即弃上下文 · 仅挂只读检索工具</span>
+      </div>
+      <div class="trace-lane-title lane-tool">
+        <span class="badge status-success">DETERMINISTIC TOOLS</span>
+        <strong>纯确定性检索原语</strong>
+        <span class="lane-subtext">0 模型开销 · 聚合计数 / 分层抽样 / 读取单据明细</span>
+      </div>
+    </div>
+
+    <div class="trace-swimlanes">
+      <div class="trace-stage" data-step="1">
+        <div class="trace-cell cell-main">
+          <span class="trace-mobile-lane">主协调 Agent · Main Session</span>
+          <div class="trace-card card-main">
+            <p class="trace-user-prompt"><strong>用户提问：</strong>“排查近 24 小时批次验收未确认的主要原因”</p>
+            <div class="trace-card-head">
+              <strong>① 发起单次只读排查委托</strong>
+              <span class="trace-metric">隔离原始明细</span>
+            </div>
+            <div class="trace-calls">
+              <div class="trace-call">log_inspector(goal="统计近24h状态分布，抽检异常批次并归纳根因与证据ID")</div>
+            </div>
+            <span class="trace-hop">委托目标 ──▶ 开启临时子代理</span>
+          </div>
+        </div>
+        <div class="trace-cell cell-sub in-sandbox sub-start">
+          <span class="trace-mobile-lane">只读子代理 · log_inspector</span>
+          <div class="trace-card card-sub">
+            <div class="trace-card-head">
+              <strong>创建独立只读上下文</strong>
+              <span class="trace-metric">写工具 = 0</span>
+            </div>
+            <div>仅挂载 <code>count_logs</code>、<code>sample_logs</code>、<code>read_entries</code>，自主决定抽样范围。</div>
+          </div>
+        </div>
+        <div class="trace-cell cell-tool"></div>
+      </div>
+
+      <div class="trace-stage" data-step="2">
+        <div class="trace-cell cell-main">
+          <span class="trace-idle-note">⏸ 等待子代理回执 · 主会话 0 写入</span>
+        </div>
+        <div class="trace-cell cell-sub in-sandbox">
+          <span class="trace-mobile-lane">只读子代理 · 分桶摸底</span>
+          <div class="trace-card card-sub">
+            <div class="trace-card-head">
+              <strong>② 按状态分桶统计（共 1,000 批）</strong>
+              <span class="trace-metric">查分布 ──▶</span>
+            </div>
+            <div class="trace-buckets" aria-label="1000 批记录状态分布">
+              <span class="trace-bucket is-dropped">健康归档 620 批 ✕</span>
+              <span class="trace-bucket is-dropped">主动取消 180 批 ✕</span>
+              <span class="trace-bucket is-kept">必填缺失 140 批 ✓</span>
+              <span class="trace-bucket is-kept">归档待核实 60 批 ✓</span>
+            </div>
+            <div class="trace-thought"><strong>判断 →</strong>前两桶共 800 批无需排查正文；仅从后两类异常桶（共 200 批）分层抽样读取明细。</div>
+          </div>
+        </div>
+        <div class="trace-cell cell-tool">
+          <span class="trace-mobile-lane">纯检索原语 · 0 LLM</span>
+          <div class="trace-card card-tool">
+            <div class="trace-card-head">
+              <strong>聚合计数查询</strong>
+              <span class="trace-metric metric-zero">0 LLM 开销</span>
+            </div>
+            <div class="trace-calls">
+              <div class="trace-call">count_logs(window="24h", group_by="batch_status")</div>
+            </div>
+            <div>仅返回状态计数，不读取单据正文。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="trace-stage" data-step="3">
+        <div class="trace-cell cell-main"></div>
+        <div class="trace-cell cell-sub in-sandbox">
+          <span class="trace-mobile-lane">只读子代理 · 抽样精读</span>
+          <div class="trace-card card-sub">
+            <div class="trace-card-head">
+              <strong>③ 抽样精读 15 批异常明细与适用规则</strong>
+              <span class="trace-metric metric-peak">峰值 2.8 万 tok · 仅驻留子代理</span>
+            </div>
+            <div class="trace-finding">
+              <strong>命中关键证据 · batch-204（逐项通过但缺归档回执）</strong>
+              记录 A/B/C 均已合格，但网关超时导致归档回执未写回，状态停留在“归档待核实”。
+            </div>
+            <div class="trace-thought"><strong>判断 →</strong>须将“字段待补充”与“归档回执待补查”拆成两类独立处理建议返回主会话。</div>
+          </div>
+        </div>
+        <div class="trace-cell cell-tool">
+          <span class="trace-mobile-lane">纯检索原语 · 并行 ×2</span>
+          <div class="trace-card card-tool">
+            <div class="trace-card-head">
+              <strong>分层抽样与明细读取</strong>
+              <span class="trace-metric metric-zero">并行 ×2 · 0 LLM</span>
+            </div>
+            <div class="trace-calls">
+              <div class="trace-call">sample_logs(status=["missing_field", "archive_unverified"], n=15)</div>
+              <div class="trace-call">read_entries(batch_ids=[...15 个批次 ID...])</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="trace-stage" data-step="4">
+        <div class="trace-cell cell-main">
+          <span class="trace-mobile-lane">主协调 Agent · 接收回执</span>
+          <div class="trace-card card-main">
+            <div class="trace-card-head">
+              <strong>④ 收到精炼回执并衔接后续受控动作</strong>
+              <span class="trace-metric metric-zero">主会话仅 +~450 字</span>
+            </div>
+            <ol class="trace-receipt-list">
+              <li><strong>过滤范围</strong>：排除正常归档与主动取消（800 批），聚焦 200 批异常记录。</li>
+              <li><strong>原因拆分</strong>：140 批为单条必填字段缺失，60 批为网关超时导致归档回执缺失（如 <code>batch-204</code>）。</li>
+            </ol>
+            <div class="trace-routes">
+              <span class="trace-route-pill"><strong>分支 A：</strong>生成缺失字段补录确认单</span>
+              <span class="trace-route-pill"><strong>分支 B：</strong>触发归档回执对账任务</span>
+            </div>
+          </div>
+        </div>
+        <div class="trace-cell cell-sub in-sandbox sub-end">
+          <span class="trace-mobile-lane">只读子代理 · 释放退出</span>
+          <div class="trace-card card-destroy">
+            <div class="trace-card-head">
+              <strong>✕ 子代理上下文结束即销毁</strong>
+              <span class="trace-metric metric-zero">释放 2.8 万 tok</span>
+            </div>
+            <div>15 批原始日志明细随调用结束直接释放，不写入主会话历史。</div>
+            <span class="trace-hop hop-return">◀── 仅回写 ~450 字结构化结论</span>
+          </div>
+        </div>
+        <div class="trace-cell cell-tool"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<figcaption>图 4 · 合成委托轨迹示例：主协调会话、只读子代理临时沙盒与确定性检索原语分处三列泳道；2.8 万 Tokens 原始日志在中间虚线沙盒消化并销毁，主会话仅增加约 450 字结构化结论。</figcaption>
 </figure></section>
 </main>
 </div>
@@ -723,6 +999,152 @@ footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 12px
     });
   }
 
+  function initTableColumnResize(doc, win, report) {
+    if (typeof report.querySelectorAll !== 'function' || typeof doc.createElement !== 'function') return;
+    const tables = Array.from(report.querySelectorAll('table'));
+    if (!tables.length) return;
+    let dragState = null;
+    let hasResizable = false;
+
+    function finishDrag() {
+      if (!dragState) return;
+      if (dragState.handle.classList) dragState.handle.classList.remove('is-dragging');
+      if (doc.documentElement && doc.documentElement.removeAttribute) doc.documentElement.removeAttribute('data-col-resizing');
+      dragState = null;
+    }
+
+    tables.forEach(table => {
+      const thead = table.querySelector && table.querySelector('thead');
+      const firstRow = thead && thead.querySelector && thead.querySelector('tr');
+      const ths = firstRow && firstRow.children ? Array.from(firstRow.children).filter(cell => cell.tagName === 'TH') : [];
+      if (ths.length < 2) return;
+      hasResizable = true;
+
+      ths.forEach((th, index) => {
+        if (th.classList) th.classList.add('has-col-resizer');
+        const handle = doc.createElement('span');
+        handle.className = 'col-resizer';
+        handle.setAttribute('aria-hidden', 'true');
+        handle.setAttribute('title', '拖动调整列宽 · 双击恢复默认');
+        th.appendChild(handle);
+
+        handle.addEventListener('pointerdown', event => {
+          if (event.button != null && event.button !== 0) return;
+          if (event.preventDefault) event.preventDefault();
+          if (event.stopPropagation) event.stopPropagation();
+          const widths = ths.map(cell => Math.max(64, Math.round((cell.getBoundingClientRect && cell.getBoundingClientRect().width) || 160)));
+          ths.forEach((cell, i) => {
+            if (cell.style) cell.style.width = `${widths[i]}px`;
+          });
+          if (table.style) {
+            table.style.tableLayout = 'fixed';
+            table.style.minWidth = '0';
+            table.style.width = `${widths.reduce((a, b) => a + b, 0)}px`;
+          }
+          if (table.classList) table.classList.add('is-col-resized');
+          if (table.parentNode && table.parentNode.classList && table.parentNode.classList.contains('table-scroll')) {
+            table.parentNode.classList.add('has-resized-table');
+          }
+          if (handle.classList) handle.classList.add('is-dragging');
+          if (doc.documentElement && doc.documentElement.setAttribute) doc.documentElement.setAttribute('data-col-resizing', 'true');
+          dragState = { table, ths, widths, index, startX: event.clientX || 0, startWidth: widths[index], handle };
+        });
+
+        handle.addEventListener('dblclick', event => {
+          if (event.preventDefault) event.preventDefault();
+          if (dragState && dragState.table === table) finishDrag();
+          ths.forEach(cell => {
+            if (cell.style) cell.style.width = '';
+          });
+          if (table.style) {
+            table.style.tableLayout = '';
+            table.style.width = '';
+            table.style.minWidth = '';
+          }
+          if (table.classList) table.classList.remove('is-col-resized');
+          if (table.parentNode && table.parentNode.classList) table.parentNode.classList.remove('has-resized-table');
+        });
+      });
+    });
+
+    if (!hasResizable) return;
+    win.addEventListener('pointermove', event => {
+      if (!dragState) return;
+      const nextWidth = Math.max(64, Math.round(dragState.startWidth + ((event.clientX || 0) - dragState.startX)));
+      dragState.widths[dragState.index] = nextWidth;
+      if (dragState.ths[dragState.index].style) dragState.ths[dragState.index].style.width = `${nextWidth}px`;
+      if (dragState.table.style) dragState.table.style.width = `${dragState.widths.reduce((a, b) => a + b, 0)}px`;
+    });
+    win.addEventListener('pointerup', finishDrag);
+    win.addEventListener('pointercancel', finishDrag);
+  }
+
+  function initAgentTraces(report) {
+    if (!report || !report.querySelectorAll) return;
+    Array.from(report.querySelectorAll('[data-agent-trace]')).forEach(trace => {
+      if (!trace.querySelectorAll) return;
+      const buttons = Array.from(trace.querySelectorAll('[data-trace-step]'));
+      const stages = Array.from(trace.querySelectorAll('.trace-stage[data-step]'));
+      if (!buttons.length || !stages.length) return;
+      const mainFill = trace.querySelector && trace.querySelector('[data-meter-main-fill]');
+      const mainText = trace.querySelector && trace.querySelector('[data-meter-main-text]');
+      const subFill = trace.querySelector && trace.querySelector('[data-meter-sub-fill]');
+      const subGhost = trace.querySelector && trace.querySelector('[data-meter-sub-ghost]');
+      const subText = trace.querySelector && trace.querySelector('[data-meter-sub-text]');
+
+      function applyStep(stepValue) {
+        const activeBtn = buttons.find(btn => btn.getAttribute('data-trace-step') === stepValue) || buttons[0];
+        const step = activeBtn.getAttribute('data-trace-step') || 'all';
+        buttons.forEach(btn => btn.setAttribute('aria-pressed', btn === activeBtn ? 'true' : 'false'));
+        trace.setAttribute('data-active-step', step);
+        stages.forEach(stage => {
+          const match = stage.getAttribute('data-step') === step;
+          if (stage.classList) {
+            stage.classList.toggle('is-active', step !== 'all' && match);
+            stage.classList.toggle('is-dimmed', step !== 'all' && !match);
+          }
+        });
+        const mainPct = activeBtn.getAttribute('data-main-pct');
+        const mainLabel = activeBtn.getAttribute('data-main-label');
+        const subPct = activeBtn.getAttribute('data-sub-pct');
+        const subGhostPct = activeBtn.getAttribute('data-sub-ghost-pct');
+        const subLabel = activeBtn.getAttribute('data-sub-label');
+        if (mainFill && mainFill.style && mainPct != null) mainFill.style.width = `${mainPct}%`;
+        if (mainText && mainLabel != null) mainText.textContent = mainLabel;
+        if (subFill && subFill.style && subPct != null) subFill.style.width = `${subPct}%`;
+        if (subGhost && subGhost.style) subGhost.style.width = `${subGhostPct || 0}%`;
+        if (subText && subLabel != null) subText.textContent = subLabel;
+      }
+
+      buttons.forEach((btn, idx) => {
+        btn.addEventListener('click', () => {
+          const targetStep = btn.getAttribute('data-trace-step') || 'all';
+          const current = trace.getAttribute('data-active-step') || 'all';
+          applyStep(targetStep !== 'all' && current === targetStep ? 'all' : targetStep);
+        });
+        btn.addEventListener('keydown', event => {
+          if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+          event.preventDefault();
+          const nextIdx = (idx + (event.key === 'ArrowRight' ? 1 : buttons.length - 1)) % buttons.length;
+          buttons[nextIdx].focus();
+          applyStep(buttons[nextIdx].getAttribute('data-trace-step') || 'all');
+        });
+      });
+
+      stages.forEach(stage => {
+        stage.addEventListener('click', event => {
+          const target = event && event.target;
+          if (target && target.closest && target.closest('a, button, summary, details')) return;
+          const stageStep = stage.getAttribute('data-step');
+          const current = trace.getAttribute('data-active-step') || 'all';
+          applyStep(current === stageStep ? 'all' : stageStep);
+        });
+      });
+
+      applyStep(trace.getAttribute('data-active-step') || 'all');
+    });
+  }
+
   function initReadingNavigation(doc, win) {
     const report = doc.querySelector('.report');
     if (!report || report.classList.contains('navigation-ready')) return false;
@@ -865,6 +1287,8 @@ footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 12px
     initThemeToggle(doc, report);
     initCitationPreviews(doc, win, report, main);
     initFloatDrawer(doc, win, report, scheduleTimer, cancelTimer);
+    initTableColumnResize(doc, win, report);
+    initAgentTraces(report);
 
     report.classList.add('navigation-ready');
     progress.hidden = false;

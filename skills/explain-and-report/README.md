@@ -1,6 +1,6 @@
-# Explain & Report · v0.5.1
+# Explain & Report · v0.5.3
 
-Create offline visual HTML reports that readers grasp in 5 seconds and can articulate clearly afterward. Pairs technical-magazine pacing with engineering-atlas structure for system explanations, ADRs, architecture convergence proposals, agent traces, and evaluation reports.
+Create offline visual HTML reports that readers grasp in 5 seconds and can articulate clearly afterward. Pairs clear visual hierarchy with traceable engineering evidence for system explanations, ADRs, architecture convergence proposals, agent traces, and evaluation reports.
 
 By default, reports go to **`<run_dir>/delivery/<topic>.html`** outside code repositories. When you specify an output folder or `.html` path, pass `--output <dir-or-file.html>` (or `--output-dir <dir>`) to write only the final HTML there while keeping figures, QA screenshots, and publish payloads in the external `run_dir`. Markdown is generated only on explicit request, and Feishu publishing runs only with explicit authorization.
 
@@ -9,8 +9,8 @@ By default, reports go to **`<run_dir>/delivery/<topic>.html`** outside code rep
 All reports share the **Zish Technical** identity in `assets/report-theme.css`:
 
 - **Theme & canvas:** Charcoal dark mode with a built-in warm-paper light toggle (`[data-theme-toggle]`), wide canvas (`max-width: min(1620px, 96vw)`), comfortable prose measure (`--body: 52rem`), and full-width grids.
-- **Explanation blocks:** 5-second executive snapshot cards (`.summary-grid`), right-margin sidenotes (`.with-sidenote` / `.sidenote`), counterexample vs. design contrasts (`.mental-model`), responsive CSS Grid flow maps (`.batch-map`), chronological traces (`.trace-stream` / `.turn-row`), external `.chart-legend` blocks, and `.diff-box` blocks.
-- **Zero-clutter reading chrome:** Compact bottom-left floating TOC (`目录` with hover preview, click-to-pin, and progress bar), inline `[C1]` / `[data-tip-title]` popovers, and a bottom-right hover/pin detail drawer (`.explorer-float-drawer`) driven by `assets/report-navigation.js`. Everything essential degrades cleanly without JS.
+- **Explanation blocks:** 5-second executive snapshot cards (`.summary-grid`), right-margin sidenotes (`.with-sidenote` / `.sidenote`), counterexample vs. design contrasts (`.mental-model`), responsive CSS Grid flow maps (`.batch-map`), three-swimlane agent traces with context meters (`.agent-trace[data-agent-trace]`), dialogue annotations (`.trace-stream` / `.turn-row`), external `.chart-legend` blocks, and `.diff-box` blocks.
+- **Zero-clutter reading chrome:** Compact bottom-left floating TOC (`目录` with hover preview, click-to-pin, and progress bar), inline `[C1]` / `[data-tip-title]` popovers, a bottom-right hover/pin detail drawer (`.explorer-float-drawer`), draggable table column dividers (`.col-resizer`, double-click to reset), and `[data-agent-trace]` step highlighters driven by `assets/report-navigation.js`. Everything essential degrades cleanly without JS.
 
 ## Bundled Assets
 
@@ -19,7 +19,7 @@ All reports share the **Zish Technical** identity in `assets/report-theme.css`:
 | `assets/report-shell.html` | Minimal offline starter shell with theme toggle, floating TOC, and navigation controller |
 | `assets/reference-layout.html` | Complete Explain reference (snapshot, contrast, trace-stream, sidenotes) |
 | `assets/reference-report.html` | Complete Report / ADR reference (decision snapshot, comparison table, drawers, citations) |
-| `assets/flow-patterns.html` | Static CSS Grid diagrams for fan-out, convergence, branching, and validation |
+| `assets/flow-patterns.html` | CSS Grid flow diagrams and three-swimlane `.agent-trace` delegation template |
 | `assets/mechanism-walkthrough.html` | Interactive sequence replay paired with static explanation |
 
 ## Install
